@@ -18,7 +18,7 @@ using System.Net;
 using Newtonsoft.Json.Linq;
 
 namespace EyeTribe.Unity
-{ 
+{
     public class EyeTribeSDK : MonoBehaviour, IGazeListener, IConnectionStateListener, ITrackerStateListener, ICalibrationResultListener
     {
         public static event Action<bool> OnConnectionStateChange;
@@ -102,9 +102,6 @@ namespace EyeTribe.Unity
             });
         }
 
-        public void OnScreenStatesChanged(int screenIndex, int screenResolutionWidth, int screenResolutionHeight, float screenPhysicalWidth, float screenPhysicalHeight)
-        { }
-        
         public void OnCalibrationChanged(bool isCalibrated, CalibrationResult calibResult)
         {
             _Dispatcher.Dispatch(() =>
@@ -204,122 +201,5 @@ namespace EyeTribe.Unity
 
             return path;
         }
-
-        /*
-        private String GetAndroidContextInternalFilesDir()
-        {
-            string path = "";
-
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                //if Android, we call native methods to find internal context storage path
-
-                try
-                {
-                    using (AndroidJavaClass ajc = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-                    {
-                        using (AndroidJavaObject ajo = ajc.GetStatic<AndroidJavaObject>("currentActivity"))
-                        {
-                            path = ajo.Call<AndroidJavaObject>("getFilesDir").Call<string>("getAbsolutePath");
-
-                            Debug.Log("INTERNAL FilesDir: " + path);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning("Error fetching native Android internal storage dir: " + e.Message);
-                }
-            }
-
-            return path;
-        }
-
-
-        private String GetAndroidContextPackageName()
-        {
-            string name = "";
-
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                try
-                {
-                    using (AndroidJavaClass ajc = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-                    {
-                        using (AndroidJavaObject ajo = ajc.GetStatic<AndroidJavaObject>("currentActivity"))
-                        {
-                            name = ajo.Call<string>("getPackageName");
-
-                            Debug.Log("PackageName: " + name);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning("Error fetching native Android internal storage dir: " + e.Message);
-                }
-            }
-
-            return name;
-        }
-
-        private int GetAndroidContextRawResId(string rawFilename)
-        {
-            int resId = 0;
-
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                try
-                {
-                    using (AndroidJavaClass ajc = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-                    {
-                        using (AndroidJavaObject ajo = ajc.GetStatic<AndroidJavaObject>("currentActivity"))
-                        {
-                            using (AndroidJavaObject uri = new AndroidJavaClass("android.net.Uri"))
-                            {
-                                string package = GetAndroidContextPackageName();
-                                resId = ajo.Call<AndroidJavaObject>("getResources").Call<int>("getIdentifier", rawFilename, "raw", package);
-
-                                Debug.Log("RawResId: " + resId);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning("Error fetching native Android internal storage dir: " + e.Message);
-                }
-            }
-
-            return resId;
-        }
-
-        private String GetAndroidContextRawFilePath(string rawFilename)
-        {
-            string path = "";
-
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                try
-                {
-                    int resId = GetAndroidContextRawResId(rawFilename);
-                    string rawFilePath = "android.resource:///" + GetAndroidContextPackageName() + "/" + resId;
-                    using (AndroidJavaClass ajc = new AndroidJavaClass("android.net.Uri"))
-                    {
-                        path = ajc.CallStatic<AndroidJavaObject>("parse", rawFilePath).Call<string>("getPath");
-
-                        Debug.Log("RawFilePath: " + rawFilePath);
-                        Debug.Log("RawFilePath2: " + path);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning("Error fetching native Android internal storage dir: " + e.Message);
-                }
-            }
-
-            return path;
-        }
-        */
     }
 }

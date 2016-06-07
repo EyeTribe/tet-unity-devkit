@@ -64,19 +64,16 @@ namespace EyeTribe.Unity
 
         private void Update() 
         {
-            if (_Reticle.IsShown())
+            if (
+                /* Handled by VRInput
+                Input.GetKeyDown(KeyCode.LeftControl) ||
+                    */
+                Input.GetKeyDown(KeyCode.RightControl) ||
+                Input.GetKeyDown(KeyCode.LeftCommand) ||
+                Input.GetKeyDown(KeyCode.RightCommand)
+                )
             {
-                if (
-                    /* Handled by VRInput
-                    Input.GetKeyDown(KeyCode.LeftControl) ||
-                     */
-                    Input.GetKeyDown(KeyCode.RightControl) ||
-                    Input.GetKeyDown(KeyCode.LeftCommand) ||
-                    Input.GetKeyDown(KeyCode.RightCommand)
-                    )
-                {
-                    HandleDown();
-                }
+                HandleDown();
             }
 
             if (
@@ -104,16 +101,13 @@ namespace EyeTribe.Unity
         public void Show()
         {
             _Selection.gameObject.SetActive(true);
-            _IsSelectionRadialActive = true;
+
         }
 
         public void Hide()
         {
             _Selection.gameObject.SetActive(false);
-            _IsSelectionRadialActive = false;
-
-            // This effectively resets the radial for when it's shown again.
-            _Selection.fillAmount = 0f;            
+      
         }
 
         private IEnumerator FillSelectionRadial()
@@ -156,6 +150,9 @@ namespace EyeTribe.Unity
             if (null != OnSelectionComplete)
                 OnSelectionComplete();
 
+            // This effectively resets the radial for when it's shown again.
+            _Selection.fillAmount = 0f;    
+
             // Hide once complete
             Hide();
         }
@@ -163,8 +160,12 @@ namespace EyeTribe.Unity
         private void HandleDown()
         {
             if (null == _SelectionFillRoutine)
-            { 
-                Show();
+            {
+                // Only show if _Reticle active
+                if (_Reticle.enabled)
+                    Show();
+
+                _IsSelectionRadialActive = true;
     
                 // If the radial is active start filling it.
                 StartCoroutine(_SelectionFillRoutine = FillSelectionRadial());
@@ -174,7 +175,7 @@ namespace EyeTribe.Unity
         private void HandleUp()
         {
             // If the radial is active stop filling it and reset it's amount.
-            if(null != _SelectionFillRoutine)
+            if (null != _SelectionFillRoutine)
             {
                 StopCoroutine(_SelectionFillRoutine);
                 _SelectionFillRoutine = null;
@@ -184,7 +185,12 @@ namespace EyeTribe.Unity
                     OnSelectionAborted();
             }
 
-            //hides automatically as part of coroutine
+            // Turn off the radial so it can only be used once.
+            _IsSelectionRadialActive = false;
+
+            // This effectively resets the radial for when it's shown again.
+            _Selection.fillAmount = 0f;  
+
             Hide();
         }
     }
