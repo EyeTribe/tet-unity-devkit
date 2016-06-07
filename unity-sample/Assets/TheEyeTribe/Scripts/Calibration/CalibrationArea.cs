@@ -23,14 +23,40 @@ namespace EyeTribe.Unity.Calibration
 
         [SerializeField]public GameObject _CalibArea;
 
+        private bool _IsInitialized;
+
         private float _CalibAreaSubSampleLevel = 40;
         private float _CalibAreaSizeIncrementX;
         private float _CalibAreaSizeIncrementY;
         private float _CalibAreaPaddingXNum;
         private float _CalibAreaPaddingYNum;
+        private float _CalibAreaSizeIncrementRelativeX = 0f;
+        private float _CalibAreaSizeIncrementRelativeY = 0f;
 
-        public float CalibAreaSizeIncrementRelativeX { get; private set; }
-        public float CalibAreaSizeIncrementRelativeY { get; private set; }
+        public float CalibAreaSizeIncrementRelativeX { 
+            get
+            {
+                if (!_IsInitialized)
+                    UpdateCalibAreaSize();
+                return _CalibAreaSizeIncrementRelativeX;
+            }
+            private set 
+            {
+                _CalibAreaSizeIncrementRelativeX = value;
+            }
+        }
+        public float CalibAreaSizeIncrementRelativeY {
+            get
+            {
+                if (!_IsInitialized)
+                    UpdateCalibAreaSize();
+                return _CalibAreaSizeIncrementRelativeY;
+            }
+            private set
+            {
+                _CalibAreaSizeIncrementRelativeY = value;
+            }
+        }
 
         void Awake() 
         {
@@ -43,9 +69,7 @@ namespace EyeTribe.Unity.Calibration
 
         void OnEnable()
         {
-            InitCalibAreaSize(_CalibArea);
-
-            UpdateCalibAreaSize(_CalibArea);
+            UpdateCalibAreaSize();
 
             _CalibArea.gameObject.SetRendererEnabled(false);
         }
@@ -99,50 +123,48 @@ namespace EyeTribe.Unity.Calibration
                 }
 
                 if (updateCalibArea)
-                    UpdateCalibAreaSize(_CalibArea);
+                    UpdateCalibAreaSize();
             }
         }
 
-        private void InitCalibAreaSize(GameObject calibArea)
+        private void UpdateCalibAreaSize()
         {
-            if (null != calibArea)
-            {
-                // total screen size in Unity units
+            if (_Camera.isActiveAndEnabled)
+            { 
                 Vector2 worldScreen = _Camera.GetPerspectiveWorldScreenBounds(_CalibArea.transform.localPosition.z);
 
-                // initial size de/incrementer
-                _CalibAreaSizeIncrementX = worldScreen.x / _CalibAreaSubSampleLevel;
-                _CalibAreaSizeIncrementY = worldScreen.y / _CalibAreaSubSampleLevel;
-                _CalibAreaPaddingXNum = 34;
-                _CalibAreaPaddingYNum = 32;
-
-                // mode specific adjustments
-                if (VRMode.IsRunningInVRMode())
+                if (!_IsInitialized)
                 {
-                    _CalibAreaPaddingXNum = 8;
-                    _CalibAreaPaddingYNum = 7;
+                    // If _Camera not initialized, we abort update
+                    if (float.IsNaN(worldScreen.x) || float.IsNaN(worldScreen.y))
+                        return;
+
+                    // initial size de/incrementer
+                    _CalibAreaSizeIncrementX = worldScreen.x / _CalibAreaSubSampleLevel;
+                    _CalibAreaSizeIncrementY = worldScreen.y / _CalibAreaSubSampleLevel;
+                    _CalibAreaPaddingXNum = 34;
+                    _CalibAreaPaddingYNum = 32;
+
+                    // mode specific adjustments
+                    if (VRMode.IsRunningInVRMode())
+                    {
+                        _CalibAreaPaddingXNum = 8;
+                        _CalibAreaPaddingYNum = 7;
+                    }
+
+                    _IsInitialized = true;
                 }
 
-                UpdateCalibAreaSize(calibArea);
-            }
-        }
+                _CalibAreaSizeIncrementRelativeX = (_CalibAreaPaddingXNum * _CalibAreaSizeIncrementX) / worldScreen.x;
+                _CalibAreaSizeIncrementRelativeY = (_CalibAreaPaddingYNum * _CalibAreaSizeIncrementY) / worldScreen.y;
 
-        private void UpdateCalibAreaSize(GameObject calibArea)
-        {
-            if (null != calibArea)
-            {
-                Vector2 worldScreen = _Camera.GetPerspectiveWorldScreenBounds(calibArea.transform.localPosition.z);
+                float localSizeX = worldScreen.x * _CalibAreaSizeIncrementRelativeX;
+                float localSizeY = worldScreen.y * _CalibAreaSizeIncrementRelativeY;
 
-                CalibAreaSizeIncrementRelativeX = (_CalibAreaPaddingXNum * _CalibAreaSizeIncrementX) / worldScreen.x;
-                CalibAreaSizeIncrementRelativeY = (_CalibAreaPaddingYNum * _CalibAreaSizeIncrementY) / worldScreen.y;
-
-                float localSizeX = worldScreen.x * CalibAreaSizeIncrementRelativeX;
-                float localSizeY = worldScreen.y * CalibAreaSizeIncrementRelativeY;
-
-                calibArea.transform.localScale = new Vector3(
+                _CalibArea.transform.localScale = new Vector3(
                     localSizeX,
                     localSizeY,
-                    calibArea.transform.localScale.z
+                    _CalibArea.transform.localScale.z
                     );
             }
         }

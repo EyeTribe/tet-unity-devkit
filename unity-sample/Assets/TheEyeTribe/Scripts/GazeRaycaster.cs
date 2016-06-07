@@ -19,13 +19,14 @@ namespace EyeTribe.Unity
     /* Inspired by on 'VRStandardAssets.Utils.VREyeRaycaster' from 'Unity VRSamples' */
 
     /// <summary>
-    /// Handles the UI associated to displaying eye pupils
+    /// Manages ray-casting based on gaze input.
+    /// <para/>
+    /// Objects that are hit and that have VRInteractiveItem components are notified of the collision state.
+    /// <para/>
+    /// The ReticleEyeTribe component is positioned based on ray-cast.
     /// </summary>
     public class GazeRaycaster : MonoBehaviour
     {
-        [SerializeField]private int _UpdatesPerSecond = 60;
-        private float _UpdateDelaySeconds;
-
         [SerializeField]private Camera _Camera;
         [SerializeField]private LayerMask _ExclusionLayers;
         [SerializeField]private bool _ShowDebugRay;                   // Optionally show the debug ray.
@@ -39,8 +40,6 @@ namespace EyeTribe.Unity
 
         private bool _UsingSmooth;
 
-        private IEnumerator _GazeCycle;
-
         void Awake()
         {
             if (null == _Camera)
@@ -48,25 +47,15 @@ namespace EyeTribe.Unity
 
             if (null == _Reticle)
                 throw new Exception("_Reticle is not set!");
-
-            if (_UpdatesPerSecond <= 0)
-                throw new Exception("UpdatesPerSecond must be a positive number");
-
-            _UpdateDelaySeconds = 1f / _UpdatesPerSecond;
         }
 
         private void OnEnable()
         {
-            StartCoroutine(_GazeCycle = GazeRaycastCoroutine());
-
             GazeUiController.OnSmoothModeToggle += ToogleSmooth;
         }
 
         private void OnDisable()
         {
-            if (null != _GazeCycle)
-                StopCoroutine(_GazeCycle);
-
             GazeUiController.OnSmoothModeToggle -= ToogleSmooth;
         }
 
@@ -84,84 +73,83 @@ namespace EyeTribe.Unity
             _UsingSmooth = isSmooth;
         }
 
-        IEnumerator GazeRaycastCoroutine()
+        void Update()
         {
-            while (enabled)
+            Point3D gazeVec = GazeFrameCache.Instance.GetLastGazeVectorAvg();
+            Ray ray = new Ray();
+
+            if (Point3D.Zero != gazeVec)
             {
-                Point3D gazeVec = GazeFrameCache.Instance.GetLastGazeVectorAvg();
-                Ray ray = new Ray();
+                ray = new Ray(_Camera.transform.position, _Camera.transform.rotation * gazeVec.ToVec3());
+            }
+            else 
+            {
+                // If no gaze vec, define ray based on 2D gaze coordinates
+                Point2D gaze;
+                if (!_UsingSmooth)
+                    gaze = GazeFrameCache.Instance.GetLastRawGazeCoordinates();
+                else
+                    gaze = GazeFrameCache.Instance.GetLastSmoothedGazeCoordinates();
 
-                if (Point3D.Zero != gazeVec)
-                {
-                    ray = new Ray(_Camera.transform.position, _Camera.transform.rotation * gazeVec.ToVec3());
-                }
-                else 
-                {
-                    // If no gaze vec, define ray based on 2D gaze coordinates
-                    Point2D gaze;
-                    if (!_UsingSmooth)
-                        gaze = GazeFrameCache.Instance.GetLastRawGazeCoordinates();
-                    else
-                        gaze = GazeFrameCache.Instance.GetLastSmoothedGazeCoordinates();
-
-                    if (Point2D.Zero != gaze)
-                    { 
-                        Vector3 worldGaze = _Camera.ScreenToWorldPoint(new Vector3(gaze.X, _Camera.pixelHeight - gaze.Y, 10f));
+                if (Point2D.Zero != gaze)
+                { 
+                    Vector3 worldGaze = _Camera.ScreenToWorldPoint(new Vector3(gaze.X, _Camera.pixelHeight - gaze.Y, 10f));
     
-                        Vector3 rayVec = worldGaze - _Camera.transform.position;
-                        rayVec.Normalize();
+                    Vector3 rayVec = worldGaze - _Camera.transform.position;
+                    rayVec.Normalize();
 
-                        gazeVec = rayVec.ToPoint3D();
+                    gazeVec = rayVec.ToPoint3D();
 
-                        ray = new Ray(_Camera.transform.position, rayVec);
-                    }
+                    ray = new Ray(_Camera.transform.position, rayVec);
+                }
+            }
+
+            if (Point3D.Zero != gazeVec)
+            {
+                Vector3 rayDirection = gazeVec.ToVec3();
+
+                // Show the debug ray if required
+                if (_ShowDebugRay)
+                {
+                    Debug.DrawRay(_Camera.transform.position, rayDirection * _DebugRayLength, Color.blue, _DebugRayDuration);
                 }
 
-                if (Point3D.Zero != gazeVec)
+                RaycastHit hit;
+
+                // Do the raycast forweards to see if we hit an interactive item
+                if (Physics.Raycast(ray, out hit, _RayLength, ~_ExclusionLayers))
                 {
-                    Vector3 rayDirection = gazeVec.ToVec3();
+                    VRInteractiveItem interactible = hit.collider.GetComponent<VRInteractiveItem>(); //attempt to get the VRInteractiveItem on the hit object
+                    _CurrentInteractible = interactible;
 
-                    // Show the debug ray if required
-                    if (_ShowDebugRay)
-                    {
-                        Debug.DrawRay(_Camera.transform.position, rayDirection * _DebugRayLength, Color.blue, _DebugRayDuration);
-                    }
+                    // If we hit an interactive item and it's not the same as the last interactive item, then call Over
+                    if (interactible && interactible != _LastInteractible)
+                        interactible.Over();
 
-                    RaycastHit hit;
-
-                    // Do the raycast forweards to see if we hit an interactive item
-                    if (Physics.Raycast(ray, out hit, _RayLength, ~_ExclusionLayers))
-                    {
-                        VRInteractiveItem interactible = hit.collider.GetComponent<VRInteractiveItem>(); //attempt to get the VRInteractiveItem on the hit object
-                        _CurrentInteractible = interactible;
-
-                        // If we hit an interactive item and it's not the same as the last interactive item, then call Over
-                        if (interactible && interactible != _LastInteractible)
-                            interactible.Over();
-
-                        // Deactive the last interactive item 
-                        if (interactible != _LastInteractible)
-                            DeactiveLastInteractible();
-
-                        _LastInteractible = interactible;
-                    }
-                    else
-                    {
-                        // Nothing was hit, deactive the last interactive item.
+                    // Deactive the last interactive item 
+                    if (interactible != _LastInteractible)
                         DeactiveLastInteractible();
-                        _CurrentInteractible = null;
-                    }
 
-                    //handle reticle position
-                    _Reticle.SetPosition(hit);
-                    _Reticle.Show();
+                    _LastInteractible = interactible;
                 }
                 else
                 {
-                    _Reticle.Hide();
+                    // Nothing was hit, deactive the last interactive item.
+                    DeactiveLastInteractible();
+                    _CurrentInteractible = null;
                 }
 
-                yield return new WaitForSeconds(_UpdateDelaySeconds);
+                //handle reticle position
+                if (_Reticle.enabled) 
+                {
+                    _Reticle.SetPosition(hit);
+                    _Reticle.Show();
+                }
+            }
+            else
+            {
+                if (_Reticle.enabled)
+                    _Reticle.Hide();
             }
         }
     }

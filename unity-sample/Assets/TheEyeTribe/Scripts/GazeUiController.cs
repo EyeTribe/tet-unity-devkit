@@ -17,7 +17,7 @@ using EyeTribe.ClientSdk;
 namespace EyeTribe.Unity 
 {
     /// <summary>
-    /// Handles the UI associated to debug ui
+    /// Handles the logic associated to Gaze & Debug UI
     /// </summary>
     public class GazeUiController : MonoBehaviour
     {
@@ -27,12 +27,10 @@ namespace EyeTribe.Unity
 
         [SerializeField]private Camera _Camera;
 
-        [SerializeField]private int _UpdatesPerSecond = 10;
+        [SerializeField]private int _UpdatesPerSecond = 5;
         private float _UpdateDelaySeconds;
 
-        [SerializeField]private Canvas _Canvas;
-
-        [SerializeField]private GameObject _GazeReticle;
+        [SerializeField]private ReticleEyeTribe _GazeReticle;
         
         [SerializeField]private VRInput _VRInput;
 
@@ -65,9 +63,6 @@ namespace EyeTribe.Unity
         {
             if (null == _Camera)
                 Debug.LogError("No Main Camera found!");
-
-            if (null == _Canvas)
-                Debug.LogError("No Canvas found!");
 
             if (null == _GazeReticle)
                 Debug.LogError("No GazeReticle found!");
@@ -106,7 +101,7 @@ namespace EyeTribe.Unity
 
             _ExitButton.gameObject.SetRendererEnabled(false);
             _ExitButton.onClick.RemoveAllListeners();
-            _ExitButton.onClick.AddListener(() => { GoBackOrExit(); });
+            _ExitButton.onClick.AddListener(() => { LevelManager.Instance.LoadPreviousLevelOrExit(); });
 
             _ToggleButton.gameObject.SetRendererEnabled(false);
             _ToggleButton.onClick.RemoveAllListeners();
@@ -153,7 +148,7 @@ namespace EyeTribe.Unity
             _ExitButton.gameObject.SetActive(false);
             _ToggleButton.gameObject.SetActive(false);
 
-            Vector2 anchor = new Vector2(0, (_Canvas.pixelRect.height * .325f));
+            Vector2 anchor = new Vector2(0, (_Camera.pixelRect.height * .325f));
 
             _EyeTribeFpsText.rectTransform.anchorMin = new Vector2(.5f, 0);
             _EyeTribeFpsText.rectTransform.anchorMax = new Vector2(.5f, 0);
@@ -229,7 +224,7 @@ namespace EyeTribe.Unity
             // detect keyboard 'esc' or Android 'back'
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                GoBackOrExit();
+                LevelManager.Instance.LoadPreviousLevelOrExit();
             }
 
             if(!GazeManager.Instance.IsCalibrating)
@@ -259,7 +254,10 @@ namespace EyeTribe.Unity
         {
             _ShowGazeIndicator = !_ShowGazeIndicator;
 
-            _GazeReticle.SetActive(_ShowGazeIndicator);
+            _GazeReticle.enabled = _ShowGazeIndicator;
+
+            if (!_GazeReticle.enabled)
+                _GazeReticle.Hide();
 
             if (null != OnIndicatorModeToggle)
                 OnIndicatorModeToggle(ShowGazeIndicator);
@@ -284,16 +282,6 @@ namespace EyeTribe.Unity
 
             if (null != OnDebugModeToggle)
                 OnDebugModeToggle(ShowDebug);
-        }
-
-        public void GoBackOrExit()
-        {
-#if UNITY_EDITOR
-            if (Application.isEditor)
-                UnityEditor.EditorApplication.isPlaying = false;
-            else
-#endif
-                Application.Quit();
         }
 
         private IEnumerator GazeCoordUpdater()

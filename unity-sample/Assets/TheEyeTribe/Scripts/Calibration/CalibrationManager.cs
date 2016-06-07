@@ -169,7 +169,7 @@ namespace EyeTribe.Unity.Calibration
 
         public void LoadNextScene()
         {
-            SceneManager.LoadSceneAsync(1, LoadSceneMode.Single);
+            LevelManager.Instance.LoadNextLevel(1);
         }
 
         void Update() 
@@ -213,19 +213,9 @@ namespace EyeTribe.Unity.Calibration
                 // detect keyboard 'esc' or Android 'back'
                 if (Input.GetKeyDown(KeyCode.Escape))
                 {
-                    GoBackOrExit();
+                    LevelManager.Instance.LoadPreviousLevelOrExit();
                 }
             }
-        }
-
-        private void GoBackOrExit()
-        {
-#if UNITY_EDITOR
-            if (Application.isEditor)
-                UnityEditor.EditorApplication.isPlaying = false;
-            else
-#endif
-                Application.Quit();
         }
 
         /**
