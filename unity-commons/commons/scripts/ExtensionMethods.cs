@@ -123,6 +123,21 @@ public static class ExtensionMethods
         return new Vector3((float)gp.X, (float)gp.Y, 0f);
     }
 
+    public static Vector3 GetWorldPositionFromGaze(this Point2D gp, Camera cam, float depth)
+    {
+        if (null != cam)
+        {
+            return cam.ScreenToWorldPoint(
+                new Vector3(
+                    (float)gp.X,
+                    (float)(cam.pixelHeight - gp.Y),
+                    depth)
+                    );
+        }
+
+        return Vector3.zero;
+    }
+
     #endregion
 
     #region Point3D Extensions
@@ -263,11 +278,27 @@ public static class ExtensionMethods
 
     #region Camera Extensions
 
+    /// <summary>
+    /// Find the bounds of the Camera viewport in Unity units (meters) at a desired distance.
+    /// </summary>
+    /// <param name="depth"/>distance from camera to use</param>
+    /// <returns>Unity Vector2</returns>
     public static Vector2 GetPerspectiveWorldScreenBounds(this Camera camera, float depth)
+    {
+        return GetPerspectiveDegreeBounds(camera, camera.fieldOfView, depth);
+    }
+
+    /// <summary>
+    /// Find the bounds of custom Camera viewport in Unity units (meters) at a desired distance.
+    /// </summary>
+    /// <param name="degrees"/>width of custom fov in degrees</param>
+    /// <param name="depth"/>distance from camera to use</param>
+    /// <returns>Unity Vector2</returns>
+    public static Vector2 GetPerspectiveDegreeBounds(this Camera camera, float degrees, float depth)
     {
         Vector3 position = camera.transform.position + camera.transform.forward * depth;
 
-        float h = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * 0.5f) * depth * 2f;
+        float h = Mathf.Tan(degrees * Mathf.Deg2Rad * 0.5f) * depth * 2f;
 
         return new Vector2(h * camera.aspect, h);
     }

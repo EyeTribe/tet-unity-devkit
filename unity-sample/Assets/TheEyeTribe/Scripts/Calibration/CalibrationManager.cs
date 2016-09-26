@@ -16,6 +16,7 @@ using EyeTribe.Unity;
 using VRStandardAssets.Utils;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using EyeTribe.Unity.Interaction;
 
 namespace EyeTribe.Unity.Calibration
 {
@@ -24,42 +25,55 @@ namespace EyeTribe.Unity.Calibration
     /// </summary>
     public class CalibrationManager : MonoBehaviour, ICalibrationProcessHandler
     {
-        [SerializeField]protected Camera _Camera;
-        [SerializeField]private Canvas _Canvas;
-        [SerializeField]private EyeUI _EyeUI;
-        [SerializeField]private StateNotifyer _StateNotifyer;
-        [SerializeField]private GazeRaycaster _GazeRaycaster;
-        
-        [SerializeField]private CalibrationArea _CalibArea;
+        public static event Action<bool> OnCalibrationStateChange;
 
-        [SerializeField]protected GameObject _CalibPoint;
-        [SerializeField]private float _CalibPointDepth = 2f;
+        [SerializeField] protected Camera _Camera;
+        [SerializeField] protected UIFader _CalibUIFader;
+        [SerializeField] protected GameObject _EyeUI;
+        [SerializeField] protected StateNotifyer _StateNotifyer;
+        [SerializeField] protected GazeRaycaster _GazeRaycaster;
+
+        [SerializeField] protected CalibrationArea _CalibArea;
+
+        [SerializeField] protected GameObject _CalibPoint;
+        [SerializeField] protected float _CalibPointDepth = 2f;
+        [SerializeField] protected bool _CalibPointShouldMove;
+        [SerializeField] protected MoveInterpolator _CalibPointMove;
+        [SerializeField] protected bool _CalibPointIsLocal = true;
+        [SerializeField] protected float _CalibSampleTimeSecs = 1f;
+
         private Point2D _CalibPoint2D;
 
-        [SerializeField]private Text _InfoText;
+        [SerializeField] protected Text _QualityText;
+        [SerializeField] protected Text _InfoText;
 
-        [SerializeField]private UnityDispatcher _Dispatcher;
+        [SerializeField] protected UnityDispatcher _Dispatcher;
 
-        private List<Point2D> _CalibrationPoints;
+        protected List<Point2D> _CalibrationPoints;
 
-        private const int NUM_MAX_CALIBRATION_ATTEMPTS = 3;
-        private const int NUM_MAX_RESAMPLE_POINTS = 4;
-        private int _ResampleCount;
+        protected const int NUM_MAX_CALIBRATION_ATTEMPTS = 3;
+        protected const int NUM_MAX_RESAMPLE_POINTS = 4;
+        protected int _ResampleCount;
 
-        private const float CALIB_SHOW_NEXT_POINT_DELAY = .25f;
-        private const float CALIB_EYE_SETTLE_DELAY = .5f;
-        private const float CALIB_PAUSE_AFTER_SAMPLE = 1.5f;
+        protected const int CALIB_NUM_ROWS = 3;
+        protected const int CALIB_NUM_COLUMNS = 3;
 
-        void Awake()
+        protected const float CALIB_INTRO_DELAY = 3f;
+        protected const float CALIB_SHOW_NEXT_POINT_DELAY = .25f;
+        protected const float CALIB_SHOW_OR_MOVE_DELAY = .65f;
+        protected const float CALIB_EYE_SETTLE_DELAY = .5f;
+
+        protected virtual void Awake()
         {
             if (null == _Camera)
                 throw new Exception("_Camera is not set!");
 
-            if (null == _Canvas)
-                throw new Exception("_Canvas is not set!");
+            if (null == _CalibUIFader)
+                throw new Exception("_CalibUIFader is not set!");
 
+            /* Allowed in inheriting classes
             if (null == _EyeUI)
-                throw new Exception("_EyeUI is not set!");
+                throw new Exception("_EyeUI is not set!");*/
 
             if (null == _StateNotifyer)
                 throw new Exception("_StateNotifyer is not set!");
@@ -73,6 +87,11 @@ namespace EyeTribe.Unity.Calibration
             if (null == _CalibPoint)
                 throw new Exception("_CalibPoint is not set!");
 
+            if (_CalibPointShouldMove && null == _CalibPointMove)
+                throw new Exception("_CalibPointMove is not set!");
+
+            _CalibPointMove.UseLocalTransform = _CalibPointIsLocal;
+
             if (null == _InfoText)
                 throw new Exception("_InfoText is not set!");
 
@@ -80,7 +99,7 @@ namespace EyeTribe.Unity.Calibration
                 throw new Exception("_Dispatcher is not set!");
         }
 
-        void OnEnable () 
+        protected virtual void OnEnable()
         {
             //preprare calibration point container
             _CalibrationPoints = new List<Point2D>();
@@ -96,22 +115,10 @@ namespace EyeTribe.Unity.Calibration
             VRInput.OnClick += OnClick;
         }
 
-        void OnDisable()
+        protected virtual void OnDisable()
         {
             VRInput.OnSwipe -= OnSwipe;
             VRInput.OnClick -= OnClick;
-        }
-
-        private void ShortDelay()
-        {
-            GazeManager.Instance.CalibrationPointEnd();
-
-            //disable cp
-            _CalibPoint.SetRendererEnabled(false);
-
-            //short delay before calling next cp
-            if (_CalibrationPoints.Count > 0)
-                Invoke("ShowNextCalibrationPoint", CALIB_SHOW_NEXT_POINT_DELAY);
         }
 
         private void ShowNextCalibrationPoint()
@@ -122,18 +129,56 @@ namespace EyeTribe.Unity.Calibration
                 _CalibPoint2D = _CalibrationPoints[0];
                 _CalibrationPoints.RemoveAt(0);
 
-                //position GO based on screen coordinates
-                _CalibPoint.SetWorldPositionFromGaze(_Camera, _CalibPoint2D, _CalibPointDepth);
+                if (_CalibPointShouldMove)
+                {
+                    // animate GO based on screen coordinates
+                    _CalibPoint.SetRendererEnabled(true);
 
-                //enable cp
-                _CalibPoint.SetRendererEnabled(true);
+                    if (_CalibPointIsLocal)
+                    {
+                        Vector3 worldPos = _CalibPoint2D.GetWorldPositionFromGaze(_Camera, _CalibPointDepth);
+                        Vector3 newPos = worldPos.GetRelativePosition(_Camera.transform);
+                        _CalibPointMove.MoveTo(newPos, CALIB_SHOW_OR_MOVE_DELAY);
+                    }
+                    else
+                    {
+                        Vector3 newPos = _CalibPoint2D.GetWorldPositionFromGaze(_Camera, _CalibPointDepth);
+                        _CalibPointMove.MoveTo(newPos, CALIB_SHOW_OR_MOVE_DELAY);
+                    }
 
-                //short delay allowing eye to settle before sampling
-                Invoke("SampleCalibrationPoint", CALIB_EYE_SETTLE_DELAY);
+                    Invoke("SampleCalibrationPoint", CALIB_SHOW_OR_MOVE_DELAY + CALIB_EYE_SETTLE_DELAY);
+                }
+                else
+                {
+                    // position GO based on screen coordinates
+                    if (_CalibPointIsLocal)
+                    {
+                        Vector3 worldPos = _CalibPoint2D.GetWorldPositionFromGaze(_Camera, _CalibPointDepth);
+                        _CalibPoint.transform.localPosition = worldPos.GetRelativePosition(_Camera.transform);
+                    }
+                    else
+                    {
+                        _CalibPoint.SetWorldPositionFromGaze(_Camera, _CalibPoint2D, _CalibPointDepth);
+                    }
+
+                    Invoke("ShowCalibPoint", CALIB_SHOW_OR_MOVE_DELAY);
+
+                    Invoke("SampleCalibrationPoint", CALIB_SHOW_OR_MOVE_DELAY + CALIB_EYE_SETTLE_DELAY);
+                }
 
                 //call pause after sampling
-                Invoke("ShortDelay", CALIB_PAUSE_AFTER_SAMPLE);
+                Invoke("EndSampling",
+                    CALIB_SHOW_NEXT_POINT_DELAY +
+                    CALIB_EYE_SETTLE_DELAY +
+                    _CalibSampleTimeSecs
+                    );
             }
+        }
+
+        private void ShowCalibPoint()
+        {
+            //enable cp
+            _CalibPoint.SetRendererEnabled(true);
         }
 
         protected virtual void SampleCalibrationPoint()
@@ -141,25 +186,48 @@ namespace EyeTribe.Unity.Calibration
             GazeManager.Instance.CalibrationPointStart((int)Math.Round(_CalibPoint2D.X), (int)Math.Round(_CalibPoint2D.Y));
         }
 
+        private void EndSampling()
+        {
+            GazeManager.Instance.CalibrationPointEnd();
+
+            if (!_CalibPointShouldMove || _CalibrationPoints.Count == 0)
+            {
+                //disable cp
+                _CalibPoint.SetRendererEnabled(false);
+            }
+
+            //short delay before calling next cp
+            if (_CalibrationPoints.Count > 0)
+                Invoke("ShowNextCalibrationPoint", CALIB_SHOW_NEXT_POINT_DELAY);
+        }
+
         public void StartCalibration()
         {
             if (!GazeManager.Instance.IsCalibrating)
             {
-                float width = _Camera.pixelWidth;
-                float height = _Camera.pixelHeight;
+                _QualityText.enabled = false;
+                _InfoText.text = "\n\nFollow the <b>Calibration Point</b>";
 
-                int calibWidth = (int)Math.Round(width * _CalibArea.CalibAreaSizeIncrementRelativeX);
-                int calibHeight = (int)Math.Round(height * _CalibArea.CalibAreaSizeIncrementRelativeY);
+                StartCoroutine(_CalibUIFader.InteruptAndFadeIn());
 
-                int paddingHors = (int)Math.Round((width - calibWidth) * .5f);
-                int paddingVert = (int)Math.Round((height - calibHeight) * .5f);
+                Invoke("DelayedShowCalibPoint", CALIB_INTRO_DELAY * .5f);
 
-                _CalibrationPoints = UnityCalibUtils.InitCalibrationPoints(3, 3,
-                    width, height,
-                    paddingHors, paddingVert);
-
-                GazeManager.Instance.CalibrationStart(9, this);
+                Invoke("CallCalibrationStart", CALIB_INTRO_DELAY);
             }
+        }
+
+        private void DelayedShowCalibPoint()
+        {
+            _CalibPoint.SetRendererEnabled(true);
+        }
+
+        protected virtual void CallCalibrationStart()
+        {
+            _CalibrationPoints = _CalibArea.GetCalibrationPoints(CALIB_NUM_ROWS, CALIB_NUM_COLUMNS);
+
+            StartCoroutine(_CalibUIFader.InteruptAndFadeOut());
+
+            GazeManager.Instance.CalibrationStart(CALIB_NUM_ROWS * CALIB_NUM_COLUMNS, this);
         }
 
         public void OnApplicationQuit()
@@ -167,21 +235,20 @@ namespace EyeTribe.Unity.Calibration
             GazeManager.Instance.CalibrationAbort();
         }
 
-        public void LoadNextScene()
+        public virtual void LoadNextScene()
         {
-            LevelManager.Instance.LoadNextLevel(1);
+            LevelManager.Instance.LoadNextLevel(2);
         }
 
-        void Update() 
+        void Update()
         {
             HandleInput();
         }
 
-        private void HandleInput()
+        protected virtual void HandleInput()
         {
-            if (Input.GetKeyDown(KeyCode.Space) ||
-                Input.GetKeyDown(KeyCode.Joystick1Button0)
-                )
+            // detect keyboard 'space', mouse/joy 0 press in Remote tracking mode
+            if ((!VRMode.IsRunningInVRMode && Input.GetButtonDown("Fire1")))
             {
                 if (GazeManager.Instance.Trackerstate != GazeManager.TrackerState.TRACKER_CONNECTED)
                 {
@@ -193,27 +260,13 @@ namespace EyeTribe.Unity.Calibration
                     StartCalibration();
                 }
             }
-
-            // detect keyboard 'enter', mouse press or tap
-            if (GazeManager.Instance.IsActivated &&
-                GazeManager.Instance.IsCalibrated &&
-                (Input.GetKeyDown(KeyCode.Return) ||
-                Input.GetKeyDown(KeyCode.KeypadEnter) ||
-                Input.GetKeyDown(KeyCode.Joystick1Button1)
-                )
-                )
+            // detect keyboard 'enter', mouse/joy 1 press in Remote tracking mode
+            else if (Input.GetButtonDown("Fire2"))
             {
-                //If system calibrated, go to main scene
-                LoadNextScene();
-            }
-
-            // Handle exit if _Canvas inactive
-            if (!_Canvas.gameObject.activeInHierarchy)
-            {
-                // detect keyboard 'esc' or Android 'back'
-                if (Input.GetKeyDown(KeyCode.Escape))
+                if (GazeManager.Instance.IsActivated && GazeManager.Instance.IsCalibrated)
                 {
-                    LevelManager.Instance.LoadPreviousLevelOrExit();
+                    //If VR and system calibrated, go to main scene
+                    LoadNextScene();
                 }
             }
         }
@@ -223,20 +276,20 @@ namespace EyeTribe.Unity.Calibration
          */
         private void OnClick()
         {
-            if (VRMode.IsRunningInVRMode())
-            { 
-                if (gameObject.activeInHierarchy)
+            if (VRMode.IsRunningInVRMode)
+            {
+                if (GazeManager.Instance.Trackerstate != GazeManager.TrackerState.TRACKER_CONNECTED)
                 {
-                    if (GazeManager.Instance.IsActivated && GazeManager.Instance.IsCalibrated)
+                    _StateNotifyer.ShowState("Trackerstate is invalid!");
+                }
+                else
+                {
+                    if (GazeManager.Instance.IsActivated)
                     {
-                        //If VR and system calibrated, go to main scene
-                        LoadNextScene();
-                    }
-                    else
-                    {
-                        if (GazeManager.Instance.Trackerstate != GazeManager.TrackerState.TRACKER_CONNECTED)
+                        // if GearVR mode, we only start calibration by tap if not calibrated
+                        if (VRMode.IsOculusSDKGearVR && !GazeManager.Instance.IsCalibrated)
                         {
-                            _StateNotifyer.ShowState("Trackerstate is invalid!");
+                            StartCalibration();
                         }
                         else
                         {
@@ -248,17 +301,14 @@ namespace EyeTribe.Unity.Calibration
             }
         }
 
-        /**
-         * Handles VR user input from e.g. GearVR
-         */
         protected void OnSwipe(VRInput.SwipeDirection swipe)
         {
-            if (VRMode.IsRunningInVRMode())
+            // detect only if in GearVR mode
+            if (VRMode.IsOculusSDKGearVR)
             {
                 if (gameObject.activeInHierarchy)
                 {
-                    if (VRInput.SwipeDirection.LEFT == swipe ||
-                        VRInput.SwipeDirection.RIGHT == swipe)
+                    if (VRInput.SwipeDirection.RIGHT == swipe)
                     {
                         if (GazeManager.Instance.Trackerstate != GazeManager.TrackerState.TRACKER_CONNECTED)
                         {
@@ -270,54 +320,59 @@ namespace EyeTribe.Unity.Calibration
                             StartCalibration();
                         }
                     }
+                    else if (VRInput.SwipeDirection.DOWN == swipe)
+                    {
+                        if (GazeManager.Instance.IsActivated && GazeManager.Instance.IsCalibrated)
+                        {
+                            //If VR and system calibrated, go to main scene
+                            LoadNextScene();
+                        }
+                    }
                 }
             }
         }
 
-        public void OnCalibrationStarted()
+        public virtual void OnCalibrationStarted()
         {
             // Dispatch to Unity main thread
             _Dispatcher.Dispatch(() =>
             {
-                if (_Canvas.gameObject.activeInHierarchy)
-                    _Canvas.gameObject.SetActive(false);
-
-                if (_EyeUI.gameObject.activeInHierarchy)
+                if (null != _EyeUI && _EyeUI.gameObject.activeInHierarchy)
                     _EyeUI.gameObject.SetActive(false);
 
-                Invoke("ShowNextCalibrationPoint", 1);
+                Invoke("ShowNextCalibrationPoint", 0.1f);
+
+                if (null != OnCalibrationStateChange)
+                    OnCalibrationStateChange(GazeManager.Instance.IsCalibrating);
             });
         }
 
-        public void OnCalibrationProgress(double progress)
+        public virtual void OnCalibrationProgress(double progress)
         {
             //Called every time a new calibration point have been sampled
         }
 
-        public void OnCalibrationProcessing()
+        public virtual void OnCalibrationProcessing()
         {
             // Dispatch to Unity main thread
             _Dispatcher.Dispatch(() =>
             {
-                if (!_Canvas.gameObject.activeInHierarchy)
-                    _Canvas.gameObject.SetActive(true);
+                StartCoroutine(_CalibUIFader.InteruptAndFadeIn());
 
-                if (!_EyeUI.gameObject.activeInHierarchy)
+                if (null != _EyeUI && (!_EyeUI.gameObject.activeInHierarchy))
                     _EyeUI.gameObject.SetActive(true);
 
-                _InfoText.rectTransform.SetRendererEnabled(true);
-                _InfoText.text = "Processing Calibration";
+                _InfoText.enabled = true;
+                _InfoText.text = "\n\nProcessing Calibration";
             });
         }
 
-        public void OnCalibrationResult(CalibrationResult calibResult)
+        public virtual void OnCalibrationResult(CalibrationResult calibResult)
         {
             // Dispatch to Unity main thread
             _Dispatcher.Dispatch(() =>
             {
                 Debug.Log("OnCalibrationResult: result: " + calibResult.Result + ", Avg error: " + calibResult.AverageErrorDegree);
-                _InfoText.rectTransform.SetRendererEnabled(false);
-
 
                 //Should we resample?
                 if (!calibResult.Result)
@@ -367,6 +422,9 @@ namespace EyeTribe.Unity.Calibration
                         Debug.Log("Calibration FAIL");
                     }
                 }
+
+                if (null != OnCalibrationStateChange)
+                    OnCalibrationStateChange(GazeManager.Instance.IsCalibrating);
             });
         }
     }

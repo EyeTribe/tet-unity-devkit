@@ -4,6 +4,7 @@
 PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 8
+  productGUID: 5a86b210c1fdd0a47944fb1e9e3bc5bd
   AndroidProfiler: 0
   defaultScreenOrientation: 3
   targetDevice: 2
@@ -22,14 +23,14 @@ PlayerSettings:
   defaultScreenHeightWeb: 600
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  m_ActiveColorSpace: 0
+  m_ActiveColorSpace: 1
   m_MTRendering: 1
   m_MobileMTRendering: 1
   m_StackTraceTypes: 010000000100000001000000010000000100000001000000
   iosShowActivityIndicatorOnLoading: -1
   androidShowActivityIndicatorOnLoading: -1
   iosAppInBackgroundBehavior: 0
-  displayResolutionDialog: 1
+  displayResolutionDialog: 2
   iosAllowHTTPDownload: 1
   allowedAutorotateToPortrait: 1
   allowedAutorotateToPortraitUpsideDown: 1
@@ -72,6 +73,8 @@ PlayerSettings:
   uiUse16BitDepthBuffer: 0
   ignoreAlphaClear: 0
   xboxOneResolution: 0
+  xboxOneMonoLoggingLevel: 0
+  xboxOneLoggingLevel: 1
   ps3SplashScreen: {fileID: 0}
   videoMemoryForVertexBuffers: 0
   psp2PowerMode: 0
@@ -98,7 +101,6 @@ PlayerSettings:
   xboxOneDisableKinectGpuReservation: 0
   singlePassStereoRendering: 0
   protectGraphicsMemory: 0
-  productGUID: 5a86b210c1fdd0a47944fb1e9e3bc5bd
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 21
   AndroidPreferredInstallLocation: 1
@@ -183,8 +185,8 @@ PlayerSettings:
       m_Height: 128
   m_BuildTargetBatching:
   - m_BuildTarget: Standalone
-    m_StaticBatching: 0
-    m_DynamicBatching: 0
+    m_StaticBatching: 1
+    m_DynamicBatching: 1
   - m_BuildTarget: Android
     m_StaticBatching: 1
     m_DynamicBatching: 0
@@ -269,6 +271,7 @@ PlayerSettings:
   ps4NPtitleDatPath: 
   ps4RemotePlayKeyAssignment: -1
   ps4RemotePlayKeyMappingDir: 
+  ps4PlayTogetherPlayerCount: 0
   ps4EnterButtonAssignment: 1
   ps4ApplicationParam1: 0
   ps4ApplicationParam2: 0
@@ -291,10 +294,12 @@ PlayerSettings:
   ps4PatchPkgPath: 
   ps4PatchLatestPkgPath: 
   ps4PatchChangeinfoPath: 
+  ps4PatchDayOne: 0
   ps4attribUserManagement: 0
   ps4attribMoveSupport: 0
   ps4attrib3DSupport: 0
   ps4attribShareSupport: 0
+  ps4attribExclusiveVR: 0
   ps4disableAutoHideSplash: 0
   ps4IncludedModules: []
   monoEnv: 
@@ -387,6 +392,7 @@ PlayerSettings:
   tizenSigningProfileName: 
   tizenGPSPermissions: 0
   tizenMicrophonePermissions: 0
+  tizenMinOSVersion: 0
   n3dsUseExtSaveData: 0
   n3dsCompressStaticMem: 1
   n3dsExtSaveDataNumber: 0x12345

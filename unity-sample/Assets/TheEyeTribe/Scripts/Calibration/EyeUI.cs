@@ -49,7 +49,7 @@ namespace EyeTribe.Unity.Calibration
         void OnEnable()
         {
             // Only use in 'remote' mode
-            if (VRMode.IsRunningInVRMode())
+            if (VRMode.IsRunningInVRMode)
                 gameObject.SetActive(false);
 
             _LeftEye.SetRendererEnabled(true);
@@ -62,7 +62,7 @@ namespace EyeTribe.Unity.Calibration
             if (!Application.isPlaying)
                 return;
 
-            if (!VRMode.IsRunningInVRMode())
+            if (!VRMode.IsRunningInVRMode)
             {
                 if (!GazeManager.Instance.IsCalibrating)
                 {
@@ -77,7 +77,7 @@ namespace EyeTribe.Unity.Calibration
                     Eye left = GazeFrameCache.Instance.GetLastLeftEye();
                     Eye right = GazeFrameCache.Instance.GetLastRightEye();
 
-                    double angle = -GazeFrameCache.Instance.GetLastEyesAngle();
+                    double angle = GazeFrameCache.Instance.GetLastEyesAngle();
 
                     if (null != left)
                     {

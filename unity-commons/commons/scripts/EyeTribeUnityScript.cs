@@ -29,7 +29,7 @@ namespace EyeTribe.Unity
         public virtual void Awake()
         {
             //turn off VR if no VR device present
-            _UsingVR = VRMode.IsRunningInVRMode();
+            _UsingVR = VRMode.IsRunningInVRMode;
         }
 
         public virtual void OnEnable()

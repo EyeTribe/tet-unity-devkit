@@ -46,6 +46,5 @@ namespace EyeTribe.Unity
                 return 0f;
             }
         }
-
      }
 }

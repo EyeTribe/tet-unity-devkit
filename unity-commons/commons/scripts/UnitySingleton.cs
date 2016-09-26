@@ -15,7 +15,7 @@ using UnityEngine;
 namespace EyeTribe.Unity
 {
     /// <summary>
-    /// A singleton pattern taht makes sure that a GameObject with the implementing UnitySingleton script
+    /// A singleton pattern that makes sure that a GameObject with the implementing UnitySingleton script
     /// is always present in a secene.
     /// <para/>
     /// Based on http://wiki.unity3d.com/index.php/Singleton

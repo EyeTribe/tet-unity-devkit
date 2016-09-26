@@ -19,15 +19,19 @@ using Newtonsoft.Json.Linq;
 
 namespace EyeTribe.Unity
 {
-    public class EyeTribeSDK : MonoBehaviour, IGazeListener, IConnectionStateListener, ITrackerStateListener, ICalibrationResultListener
+    public class EyeTribeSDK : MonoBehaviour, IGazeListener, IConnectionStateListener, ITrackerStateListener, 
+        ICalibrationResultListener, ICalibrationStateListener
     {
         public static event Action<bool> OnConnectionStateChange;
         public static event Action<GazeManager.TrackerState> OnTrackerStateChange;
-        public static event Action<bool, CalibrationResult> OnCalibration;
+        public static event Action<bool, CalibrationResult> OnCalibrationResult;
+        public static event Action<bool, bool> OnCalibrationStateChange;
 
         [SerializeField]private UnityDispatcher _Dispatcher;
 
         private const string DEFAULT_CFG = "network.cfg";
+
+        private IEnumerator _FrameCacheUpdater;
 
         void Awake() 
         {
@@ -42,6 +46,7 @@ namespace EyeTribe.Unity
             GazeManager.Instance.AddTrackerStateListener(this);
             GazeManager.Instance.AddCalibrationResultListener(this);
             GazeManager.Instance.AddConnectionStateListener(this);
+            GazeManager.Instance.AddCalibrationStateListener(this);
 
             //activate EyeTribe C# SDK, default port
             if (!GazeManager.Instance.IsActivated)
@@ -62,21 +67,27 @@ namespace EyeTribe.Unity
                         GazeManager.Instance.ActivateAsync(GazeManager.ApiVersion.VERSION_1_0, ip, 6555);
                     }
                 }
+
+            StartCoroutine(_FrameCacheUpdater = BalancedUpdater());
         }
 
         void OnDisable()
         {
+            if (null != _FrameCacheUpdater)
+                StopCoroutine(_FrameCacheUpdater);
+
             //deregister listeners
             GazeManager.Instance.RemoveGazeListener(this);
             GazeManager.Instance.RemoveTrackerStateListener(this);
             GazeManager.Instance.RemoveCalibrationResultListener(this);
             GazeManager.Instance.RemoveConnectionStateListener(this);
+            GazeManager.Instance.RemoveCalibrationStateListener(this);
         }
 
         public void OnGazeUpdate(GazeData gazeData)
         {
             //Add frame to GazeData cache handler
-            GazeFrameCache.Instance.Update(gazeData);
+            GazeFrameCache.Instance.Enqueue(gazeData);
         }
 
         void OnApplicationQuit()
@@ -106,9 +117,29 @@ namespace EyeTribe.Unity
         {
             _Dispatcher.Dispatch(() =>
             {
-                if (OnCalibration != null)
-                    OnCalibration(isCalibrated, calibResult);
+                if (OnCalibrationResult != null)
+                    OnCalibrationResult(isCalibrated, calibResult);
             });
+        }
+
+
+        public void OnCalibrationStateChanged(bool isCalibrating, bool isCalibrated)
+        {
+            _Dispatcher.Dispatch(() =>
+            {
+                if (OnCalibrationStateChange != null)
+                    OnCalibrationStateChange(isCalibrating, isCalibrated);
+            });
+        }
+
+        private IEnumerator BalancedUpdater() 
+        {
+            while(enabled)
+            {
+                GazeFrameCache.Instance.Update();
+
+                yield return new WaitForSeconds(Time.smoothDeltaTime / 1f);
+            }
         }
 
         public String GetExternalFilePath(string fileName)

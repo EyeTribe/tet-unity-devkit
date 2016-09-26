@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using EyeTribe.ClientSdk.Data;
 using EyeTribe.ClientSdk.Utils;
+using System.Collections.Generic;
 
 namespace EyeTribe.Unity
 {
@@ -33,7 +34,7 @@ namespace EyeTribe.Unity
                 default:
                     return "na";
             }
-        }        
+        }
     }
 }
 

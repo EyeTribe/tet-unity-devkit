@@ -19,10 +19,10 @@ namespace EyeTribe.Unity.Interaction
     /// </summary>
     public class InteractiveShakeAndFire : MonoBehaviour
     {
-        [SerializeField]public VRInteractiveItem InteractiveItem;
-        [SerializeField]public SelectionRadialEyeTribe Selection;
-        [SerializeField]public Transform ReticleTransform;
-        [SerializeField]public Rigidbody RigidBody;
+        [SerializeField] public VRInteractiveItem InteractiveItem;
+        [SerializeField] public SelectionRadialEyeTribe Selection;
+        [SerializeField] public Transform ReticleTransform;
+        [SerializeField] public Rigidbody RigidBody;
 
         private Vector3 _InitialPos;
 
@@ -33,7 +33,7 @@ namespace EyeTribe.Unity.Interaction
         private float _ShakeTime;
 
         private float _ShakeSpeed = 50f;
-        private float _ShakeAmount = 0.1f;
+        private float _ShakeAmount = 0.05f;
 
         private float _ImpulseForce = 15f;
 

@@ -18,6 +18,7 @@ using EyeTribe.ClientSdk;
 using EyeTribe.ClientSdk.Data;
 using EyeTribe.Unity;
 using VRStandardAssets.Utils;
+using EyeTribe.ClientSdk.Utils;
 
 namespace EyeTribe.Unity.Calibration
 {
@@ -26,15 +27,17 @@ namespace EyeTribe.Unity.Calibration
     /// </summary>
     public class CalibrationUI : MonoBehaviour
     {
-        [SerializeField]private CalibrationManager _CalibrationManager;
-        [SerializeField]private GazeUiController _GazeUiController;
-        [SerializeField]private StateNotifyer _StateNotifyer;
+        [SerializeField] private CalibrationManager _CalibrationManager;
+        [SerializeField] private GazeInfoController _GazeInfoController;
+        [SerializeField] private StateNotifyer _StateNotifyer;
 
-        [SerializeField]private Button _ActionButton;
-        [SerializeField]private Button _StartButton;
-        
-        [SerializeField]private Text _InfoText;
-        [SerializeField]private Text _QualityText;
+        [SerializeField] private Button _ActionButton;
+        [SerializeField] private Button _StartButton;
+
+        [SerializeField] private Text _InfoText;
+        [SerializeField] private Text _QualityText;
+
+        private System.Object _UpdateLock = new System.Object();
 
         private bool _ToggleIndicatorState;
 
@@ -43,16 +46,13 @@ namespace EyeTribe.Unity.Calibration
             if (null == _CalibrationManager)
                 throw new Exception("_CalibrationManager is not set!");
 
-            if (null == _GazeUiController)
-                throw new Exception("_GazeUiController is not set!");
-
             if (null == _StateNotifyer)
                 throw new Exception("_StateNotifyer is not set!");
 
-            if (null == _ActionButton)
+            if (null == _ActionButton && VRMode.IsRunningInVRMode)
                 throw new Exception("_ActionButton is not set!");
 
-            if (null == _StartButton)
+            if (null == _StartButton && VRMode.IsRunningInVRMode)
                 throw new Exception("_StartButton is not set!");
 
             if (null == _InfoText)
@@ -64,34 +64,50 @@ namespace EyeTribe.Unity.Calibration
             _StartButton.onClick.RemoveAllListeners();
             _StartButton.onClick.AddListener(() => { _CalibrationManager.LoadNextScene(); });
 
-            _QualityText.rectTransform.SetRendererEnabled(false);
+            _QualityText.enabled = false;
+            _InfoText.enabled = false;
 
-            _InfoText.rectTransform.SetRendererEnabled(false);
+            _StartButton.gameObject.SetActive(!VRMode.IsRunningInVRMode);
+            _ActionButton.gameObject.SetActive(!VRMode.IsRunningInVRMode);
         }
 
         void OnEnable()
         {
-            RectTransform last = _GazeUiController.GetLastUiRectTransform();
-
-            if (VRMode.IsRunningInVRMode())
-            {
-                InitUiVrMode(last);
-            }
-            else
-            {
-                InitUiRemoteMode(last);
-            }
+            StartCoroutine(DelayedInitializer());
 
             EyeTribeSDK.OnConnectionStateChange += OnConnectionStateChange;
-            EyeTribeSDK.OnCalibration += OnCalibrationChange;
+            EyeTribeSDK.OnCalibrationResult += OnCalibrationChange;
             EyeTribeSDK.OnTrackerStateChange += OnTrackerStateChange;
+            EyeTribeSDK.OnCalibrationStateChange += OnCalibrationStateChange;
         }
 
         void OnDisable()
         {
             EyeTribeSDK.OnConnectionStateChange -= OnConnectionStateChange;
-            EyeTribeSDK.OnCalibration -= OnCalibrationChange;
+            EyeTribeSDK.OnCalibrationResult -= OnCalibrationChange;
             EyeTribeSDK.OnTrackerStateChange -= OnTrackerStateChange;
+            EyeTribeSDK.OnCalibrationStateChange -= OnCalibrationStateChange;
+        }
+
+        private IEnumerator DelayedInitializer()
+        {
+            while (null == _GazeInfoController.GUIAnchor)
+            {
+                // we wait until anchor is initialized
+
+                yield return new WaitForSeconds(.1f);
+            }
+
+            if (VRMode.IsRunningInVRMode)
+            {
+                InitUiVrMode(_GazeInfoController.GUIAnchor);
+            }
+            else
+            {
+                InitUiRemoteMode();
+            }
+
+            UpdateGUIState();
         }
 
         private void InitUiVrMode(RectTransform last)
@@ -99,16 +115,16 @@ namespace EyeTribe.Unity.Calibration
             _ActionButton.gameObject.SetActive(false);
             _StartButton.gameObject.SetActive(false);
 
-            _InfoText.rectTransform.SetRendererEnabled(false);
-            
+            _InfoText.enabled = false;
+
             _QualityText.alignment = TextAnchor.MiddleCenter;
             _QualityText.rectTransform.anchoredPosition = new Vector2(last.anchoredPosition.x, last.anchoredPosition.y + _QualityText.rectTransform.sizeDelta.y);
-            _QualityText.rectTransform.anchorMin = new Vector2(.5f, 0);
-            _QualityText.rectTransform.anchorMax = new Vector2(.5f, 0);
-            _QualityText.rectTransform.SetRendererEnabled(false);
+            _QualityText.rectTransform.anchorMin = new Vector2(.5f, .5f);
+            _QualityText.rectTransform.anchorMax = new Vector2(.5f, .5f);
+            _QualityText.enabled = false;
         }
 
-        private void InitUiRemoteMode(RectTransform last)
+        private void InitUiRemoteMode()
         {
             _ActionButton.gameObject.SetActive(false);
             _StartButton.gameObject.SetActive(false);
@@ -116,12 +132,12 @@ namespace EyeTribe.Unity.Calibration
             _QualityText.alignment = TextAnchor.MiddleLeft;
             _QualityText.rectTransform.anchorMin = new Vector2(0, 0);
             _QualityText.rectTransform.anchorMax = new Vector2(0, 0);
-            _QualityText.rectTransform.anchoredPosition = new Vector2(10 + _QualityText.rectTransform.sizeDelta.x * .5f, 10);
+            _QualityText.rectTransform.anchoredPosition = new Vector2(10 + _QualityText.rectTransform.sizeDelta.x * .5f, 10 + _QualityText.rectTransform.sizeDelta.y * .5f);
         }
 
-        void OnGUI()
+        void UpdateGUIState()
         {
-            if (!VRMode.IsRunningInVRMode())
+            if (!VRMode.IsRunningInVRMode)
             {
                 UpdateUiRemoteMode();
             }
@@ -155,10 +171,10 @@ namespace EyeTribe.Unity.Calibration
                 {
                     // Hide UI during calibration
 
-                    if (_GazeUiController.ShowGazeIndicator)
+                    if (GazeGUIController.ShowGazeIndicator)
                     {
                         _ToggleIndicatorState = true;
-                        _GazeUiController.ToggleIndicatorMode();
+                        GazeGUIController.ToggleIndicatorMode();
                     }
 
                     _ActionButton.gameObject.SetActive(false);
@@ -191,7 +207,7 @@ namespace EyeTribe.Unity.Calibration
                             {
                                 _StateNotifyer.ShowState("Trackerstate is invalid!");
                             }
-                            else 
+                            else
                             {
                                 _CalibrationManager.StartCalibration();
                             }
@@ -201,13 +217,13 @@ namespace EyeTribe.Unity.Calibration
                         if (_ToggleIndicatorState)
                         {
                             _ToggleIndicatorState = !_ToggleIndicatorState;
-                            _GazeUiController.ToggleIndicatorMode();
+                            GazeGUIController.ToggleIndicatorMode();
                         }
                     }
 
                     if (!_StartButton.gameObject.activeInHierarchy)
                     {
-                        if(GazeManager.Instance.Trackerstate == GazeManager.TrackerState.TRACKER_CONNECTED)
+                        if (GazeManager.Instance.Trackerstate == GazeManager.TrackerState.TRACKER_CONNECTED)
                             _StartButton.gameObject.SetActive(true);
                     }
 
@@ -216,9 +232,9 @@ namespace EyeTribe.Unity.Calibration
                         CalibrationResult result = GazeManager.Instance.LastCalibrationResult;
 
                         string calibText = UnityCalibUtils.GetCalibString(result);
-                        _QualityText.text = "Calibration Quality: " + calibText;
+                        _QualityText.text = "<b>Calibration Quality: </b>" + calibText;
 
-                        _QualityText.rectTransform.SetRendererEnabled(true);
+                        _QualityText.enabled = true;
                     }
                 }
             }
@@ -228,13 +244,10 @@ namespace EyeTribe.Unity.Calibration
         {
             if (!GazeManager.Instance.IsActivated)
             {
-                if (!_InfoText.rectTransform.IsRendererEnabled())
-                {
-                    // GazeManager not connected
-
-                    _InfoText.rectTransform.SetRendererEnabled(true);
-                    _InfoText.text = "Unable to connect to Server";
-                }
+                // GazeManager not connected
+                _QualityText.enabled = true;
+                _InfoText.enabled = true;
+                _InfoText.text = "Unable to connect to Server";
             }
             else
             {
@@ -242,47 +255,42 @@ namespace EyeTribe.Unity.Calibration
                 {
                     // Hide UI during calibration
 
-                    if (_GazeUiController.ShowGazeIndicator)
+                    if (GazeGUIController.ShowGazeIndicator)
                     {
                         _ToggleIndicatorState = true;
-                        _GazeUiController.ToggleIndicatorMode();
+                        GazeGUIController.ToggleIndicatorMode();
                     }
                 }
                 else
                 {
-                    // Update UI depending on state
-
-                    if (!_InfoText.rectTransform.IsRendererEnabled())
+                    // Update main calibration info text
+                    string calibrate;
+                    if (!GazeManager.Instance.IsCalibrated)
                     {
-                        string calibrate;
-                        if (!GazeManager.Instance.IsCalibrated)
-                        {
-                            calibrate = "Press SPACE or SWIPE to begin calibration";
-                        }
-                        else
-                        {
-                            calibrate = "Press SPACE or SWIPE to begin re-calibration\nPress ENTER to start demo";
-                        }
-
-                        _InfoText.text = calibrate;
-
-                        _InfoText.rectTransform.SetRendererEnabled(true);
+                        calibrate = "Press <b>FIRE1*</b> or <b>SWIPE FORWARD</b>\nto begin calibration";
                     }
-
-                    if (!_QualityText.gameObject.IsRendererEnabled())
+                    else
                     {
-                        CalibrationResult result = GazeManager.Instance.LastCalibrationResult;
-                        string calibText = UnityCalibUtils.GetCalibString(result);
+                        calibrate = "Press <b>FIRE1*</b> or <b>SWIPE FORWARD</b>\nto begin re-calibration\n\nPress <b>FIRE2</b> or <b>SWIPE DOWN</b> to start demo";
+                    }
+                    _InfoText.text = calibrate;
+                    _InfoText.enabled = true;
 
-                        _QualityText.gameObject.SetRendererEnabled(true);
-                        _QualityText.text = "Calibration Quality: " + calibText;
+                    // Update Calibration quality
+                    CalibrationResult result = GazeManager.Instance.LastCalibrationResult;
+                    string calibText = UnityCalibUtils.GetCalibString(result);
+
+                    if (null != result)
+                    { 
+                        _QualityText.rectTransform.SetRendererEnabled(true);
+                        _QualityText.text = "<b>Calibration Quality: </b>" + calibText;
                     }
 
                     //restore pre-calibration indicator state
                     if (_ToggleIndicatorState)
                     {
                         _ToggleIndicatorState = !_ToggleIndicatorState;
-                        _GazeUiController.ToggleIndicatorMode();
+                        GazeGUIController.ToggleIndicatorMode();
                     }
                 }
             }
@@ -293,23 +301,48 @@ namespace EyeTribe.Unity.Calibration
             _ActionButton.gameObject.SetActive(false);
             _StartButton.gameObject.SetActive(false);
 
-            _InfoText.rectTransform.SetRendererEnabled(false);
-            _QualityText.rectTransform.SetRendererEnabled(false);
+            _InfoText.enabled = false;
+            _QualityText.enabled = false;
         }
 
         public void OnConnectionStateChange(bool isConnected)
         {
-            ResetUiState();
+            lock (_UpdateLock)
+            { 
+                ResetUiState();
+                UpdateGUIState();
+            }
         }
 
         public void OnCalibrationChange(bool isCalibrated, CalibrationResult calibResult)
         {
-            ResetUiState();
+            lock (_UpdateLock)
+            {
+                ResetUiState();
+                UpdateGUIState();
+            }
         }
 
         public void OnTrackerStateChange(GazeManager.TrackerState trackerState)
         {
-            ResetUiState();
+            lock (_UpdateLock)
+            {
+                ResetUiState();
+                UpdateGUIState();
+            }
+        }
+
+        public void OnCalibrationStateChange(bool isCalibrating, bool isCalibrated)
+        {
+            lock (_UpdateLock)
+            {
+                if (isCalibrating)
+                    _QualityText.enabled = false;
+                else
+                    _QualityText.enabled = true;
+
+                UpdateGUIState();
+            }
         }
     }
 }
