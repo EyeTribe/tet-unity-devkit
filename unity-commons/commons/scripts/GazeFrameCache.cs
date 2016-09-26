@@ -98,7 +98,7 @@ namespace EyeTribe.Unity
             get { return Holder.INSTANCE; }
         }
 
-        public virtual void Update(GazeData frame)
+        public virtual void Enqueue(GazeData frame)
         {
             //only update if not contained already
             if (_Frames.Contains(frame))
@@ -110,7 +110,10 @@ namespace EyeTribe.Unity
             _FrameTimeStamp = now;
 
             _Frames.Enqueue(frame);
+        }
 
+        public virtual void Update()
+        {
             // update gazedata based on store
             Eye right = null, left = null;
 
@@ -132,26 +135,21 @@ namespace EyeTribe.Unity
                     // if no tracking problems, then cache eye data
                     if ((gd.State & NO_TRACKING_MASK) == 0)
                     {
-                        if (!userPosIsValid &&
-                            Point2D.Zero != gd.LeftEye.PupilCenterCoordinates &&
-                            Point2D.Zero != gd.RightEye.PupilCenterCoordinates)
+                        if (!userPosIsValid)
                         {
-                            userPosIsValid = true;
+                            if (left == null && Point2D.Zero != gd.LeftEye.PupilCenterCoordinates)
+                            {
+                                left = gd.LeftEye;
+                            }
+                            else if (right == null && Point2D.Zero != gd.RightEye.PupilCenterCoordinates)
+                            {
+                                right = gd.RightEye;
+                            }
 
-                            userPos = (gd.LeftEye.PupilCenterCoordinates + gd.RightEye.PupilCenterCoordinates) / 2;
-                            eyeDistVecHalf = (gd.RightEye.PupilCenterCoordinates - gd.LeftEye.PupilCenterCoordinates) / 2;
-                            userDist = GazeUtils.GetDistancePoint2D(gd.LeftEye.PupilCenterCoordinates, gd.RightEye.PupilCenterCoordinates);
-
-                            left = gd.LeftEye;
-                            right = gd.RightEye;
-                        }
-                        else if (!userPosIsValid && left == null && Point2D.Zero != gd.LeftEye.PupilCenterCoordinates)
-                        {
-                            left = gd.LeftEye;
-                        }
-                        else if (!userPosIsValid && right == null && Point2D.Zero != gd.RightEye.PupilCenterCoordinates)
-                        {
-                            right = gd.RightEye;
+                            if (left != null && right != null)
+                            {
+                                userPosIsValid = true;
+                            }
                         }
 
                         // if gaze coordinates available, cache both raw and smoothed
@@ -170,68 +168,80 @@ namespace EyeTribe.Unity
                 _LastRawGazeCoords = gazeCoords;
                 _LastSmoothedGazeCoords = gazeCoordsSmooth;
 
-                if (Point2D.Zero != eyeDistVecHalf && eyeDistVecHalf != _LastEyesDistHalfVec)
-                    _LastEyesDistHalfVec = eyeDistVecHalf;
-
-                //Update user position values if needed data is valid
+                //Update eye based user position values if needed data is valid and no head data provided
                 if (userPosIsValid)
                 {
-                    _LastLeftEye = left;
-                    _LastRightEye = right;
+                    if (left != _LastLeftEye || right != _LastRightEye)
+                    {
+                        userPos = (left.PupilCenterCoordinates + right.PupilCenterCoordinates) * .5f;
+                        eyeDistVecHalf = (right.PupilCenterCoordinates - left.PupilCenterCoordinates) * .5f;
 
-                    //update 'depth' measure
-                    if (userDist < _MinimumEyesDistance)
-                        _MinimumEyesDistance = (float)userDist;
+                        if (Point2D.Zero != eyeDistVecHalf && eyeDistVecHalf != _LastEyesDistHalfVec)
+                            _LastEyesDistHalfVec = eyeDistVecHalf;
 
-                    if (userDist > _MaximumEyesDistance)
-                        _MaximumEyesDistance = (float)userDist;
+                        userDist = GazeUtils.GetDistancePoint2D(left.PupilCenterCoordinates, right.PupilCenterCoordinates);
+                        _LastLeftEye = left;
+                        _LastRightEye = right;
 
-                    _LastEyeDistance = 1f - ((float)userDist / _MaximumEyesDistance);
+                        //update 'depth' measure
+                        if (userDist < _MinimumEyesDistance)
+                            _MinimumEyesDistance = (float)userDist;
 
-                    //update user position
-                    _LastUserPosition = new Point3D(userPos.X, userPos.Y, (float)_LastEyeDistance);
+                        if (userDist > _MaximumEyesDistance)
+                            _MaximumEyesDistance = (float)userDist;
 
-                    //map to normalized 3D space
-                    _LastUserPosition.X = (_LastUserPosition.X * 2) - 1;
-                    _LastUserPosition.Y = (_LastUserPosition.Y * 2) - 1;
+                        _LastEyeDistance = 1f - ((float)userDist / _MaximumEyesDistance);
 
-                    _UserPosTimeStamp = now;
+                        //update user position
+                        _LastUserPosition = new Point3D(userPos.X, userPos.Y, (float)_LastEyeDistance);
 
-                    //update angle
-                    double dy = _LastRightEye.PupilCenterCoordinates.Y - _LastLeftEye.PupilCenterCoordinates.Y;
-                    double dx = _LastRightEye.PupilCenterCoordinates.X - _LastLeftEye.PupilCenterCoordinates.X;
-                    _LastEyeAngle = ((180 / Math.PI * Math.Atan2(GazeManager.Instance.ScreenResolutionHeight * dy, GazeManager.Instance.ScreenResolutionWidth * dx)));
+                        //map to normalized 3D space
+                        _LastUserPosition.X = (_LastUserPosition.X * 2) - 1;
+                        _LastUserPosition.Y = (_LastUserPosition.Y * 2) - 1;
+
+                        _UserPosTimeStamp = _FrameTimeStamp;
+
+                        //update angle
+                        double dy = _LastRightEye.PupilCenterCoordinates.Y - _LastLeftEye.PupilCenterCoordinates.Y;
+                        double dx = _LastRightEye.PupilCenterCoordinates.X - _LastLeftEye.PupilCenterCoordinates.X;
+                        _LastEyeAngle = ((180 / Math.PI * Math.Atan2(GazeManager.Instance.ScreenResolutionHeight * dy, GazeManager.Instance.ScreenResolutionWidth * dx)));
+                    }
                 }
                 else if (null != left)
                 {
-                    _LastLeftEye = left;
-                    _LastRightEye = null;
-                    Point2D newPos = _LastLeftEye.PupilCenterCoordinates + _LastEyesDistHalfVec;
-                    _LastUserPosition = new Point3D(newPos.X, newPos.Y, (float)_LastEyeDistance);
+                    if (left != _LastLeftEye)
+                    {
+                        _LastLeftEye = left;
+                        Point2D newPos = _LastLeftEye.PupilCenterCoordinates + _LastEyesDistHalfVec;
+                        _LastUserPosition = new Point3D(newPos.X, newPos.Y, (float)_LastEyeDistance);
 
-                    //map to normalized 3D space
-                    _LastUserPosition.X = (_LastUserPosition.X * 2) - 1;
-                    _LastUserPosition.Y = (_LastUserPosition.Y * 2) - 1;
+                        //map to normalized 3D space
+                        _LastUserPosition.X = (_LastUserPosition.X * 2) - 1;
+                        _LastUserPosition.Y = (_LastUserPosition.Y * 2) - 1;
 
-                    _UserPosTimeStamp = now;
+                        _UserPosTimeStamp = _FrameTimeStamp;
+                    }
                 }
                 else if (null != right)
                 {
-                    _LastRightEye = right;
-                    _LastLeftEye = null;
-                    Point2D newPos = _LastRightEye.PupilCenterCoordinates - _LastEyesDistHalfVec;
-                    _LastUserPosition = new Point3D(newPos.X, newPos.Y, (float)_LastEyeDistance);
+                    if (right != _LastRightEye)
+                    {
+                        _LastRightEye = right;
+                        Point2D newPos = _LastRightEye.PupilCenterCoordinates - _LastEyesDistHalfVec;
+                        _LastUserPosition = new Point3D(newPos.X, newPos.Y, (float)_LastEyeDistance);
 
-                    //map to normalized 3D space
-                    _LastUserPosition.X = (_LastUserPosition.X * 2) - 1;
-                    _LastUserPosition.Y = (_LastUserPosition.Y * 2) - 1;
+                        //map to normalized 3D space
+                        _LastUserPosition.X = (_LastUserPosition.X * 2) - 1;
+                        _LastUserPosition.Y = (_LastUserPosition.Y * 2) - 1;
 
-                    _UserPosTimeStamp = now;
+                        _UserPosTimeStamp = _FrameTimeStamp;
+                    }
                 }
                 else
                 {
                     _LastRightEye = null;
                     _LastLeftEye = null;
+                    _LastUserPosition = Point3D.Zero;
                 }
             }
         }
@@ -298,8 +308,6 @@ namespace EyeTribe.Unity
                 _Frames.Clear();
             }
         }
-
-
 
         #endregion
     }

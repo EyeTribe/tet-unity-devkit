@@ -8,7 +8,7 @@ This is a collection of tools and utilities for  [EyeTribe Dev Kit](https://thee
 
 An [EyeTribe Tracker](https://theeyetribe.com/products/)  or [EyeTribe VR Tracker](https://theeyetribe.com/wp-content/uploads/2016/01/vr-product-sheet.pdf) is required to use this library. This dev kit supports both ***remote eye-tracking*** and ***vr eye-tracking***.
 
-Developed for and tested against [Unity 5.4b20](https://unity3d.com/unity/beta). **Note:** This is a Unity **BETA** version.
+Developed for and tested against [Unity 5.4.1](https://store.unity.com/download?ref=update).
 
 Prerequisites
 ----
@@ -39,33 +39,35 @@ Build for desired target platform using Unity Build Settings.
 
 Keyboard:
 
+- Fire1: Left Ctrl
+- Fire2: Left Alt
+- Fire3: Left Shift
+- Fire4: Space
 - Esc: Exit app
 - 1: Show/Hide GazeIndicator
 - 2: Toggle raw/smooth gaze data
-- 3: Show/Hide debug output
+- 3: Show/Hide Gaze Info
 - 4: Show/Hide CalibrationArea
 - 5: Reduce CalibrationArea Width
 - 6: Increase CalibrationArea Width
 - 7: Reduce CalibrationArea Height
 - 8: Increase CalibrationArea Height
-- Space: Start Calibration
-- Return/enter: Start next scene (if calibrated)
-- Control/Command: Select (interaction scene)
 
 GamePad:
 
-- Fire1/X: Start Calibration *or* Select (interaction scene)
-- Fire2/Y: Start next scene (if calibrated)
-- Fire3/A: Show/Hide GazeIndicator
-- Fire4/B: Show/Hide debug output
-- Back: Go one scene back or exit
+- Fire1: X Button
+- Fire2: Y Button
+- Fire3: A Button, Show/Hide GazeIndicator
+- Fire4: B Button, Show/Hide Gaze Info
+- Back: Go Back or Exit
 
 GearVR Touchpad:
 
-- Back: Go one scene back or exit
-- Horizontal Swipe: Start Start Calibration
-- Vertical Swipe: Show/Hide debug output
-- Tap: Start next scene (if calibrated) *or* Select (interaction scene)
+- Fire1: Tap
+- Fire2: Swipe Down
+- Fire3: Swipe Back, Show/Hide GazeIndicator
+- Fire4: Double-Tap, Show/Hide Gaze Info
+- Back: Go Back or Exit
 
 
 Unity-Commons
@@ -79,7 +81,7 @@ Find the latest ***EyeTribe.Unity.dll*** under [releases](https://github.com/Eye
 
 Should you choose extend this library and build it yourself, the project needs to know your Unity installation path. To set this up, open the project file *'./unity-commons/commons/unity-commons.csproj'* with a text editor. Then modify the property *$(YourUnityFolder)* to the path of your Unity installation.
 
-    <YourUnityFolder>C:\Program Files\Unity 5.4b20\</YourUnityFolder>
+    <YourUnityFolder>C:\Program Files\Unity\</YourUnityFolder>
 
 Open the project in [Visual Studio Express 2013](https://www.microsoft.com/en-us/download/details.aspx?id=44914) or similar and build. Note that [.Net Framwork 3.5 SP1](https://www.microsoft.com/en-us/download/details.aspx?id=22) is a requirement to build a Unity supported library.
 

@@ -17,29 +17,34 @@ namespace EyeTribe.Unity
     /// </summary>
     public class VRMode
     {
-        public static bool IsRunningInVRMode()
+        public static bool IsRunningInVRMode
         {
-            return IsOculusVRActive() || IsSteamVRActive();
+            get { return IsOculusVRActive || IsSteamVRActive; }
+            private set { }
         }
 
-        public static bool IsOculusVRActive()
+        public static bool IsOculusVRActive
         {
-            return VRSettings.enabled && VRSettings.loadedDeviceName.Equals("Oculus");
+            get { return VRSettings.enabled && VRSettings.loadedDeviceName.Equals("Oculus"); }
+            private set { }
         }
 
-        public static bool IsOculusSDKGearVR()
+        public static bool IsOculusSDKGearVR
         {
-            return IsAndroidPlatform() && IsOculusVRActive();
+            get { return IsAndroidPlatform() && IsOculusVRActive; }
+            private set { }
         }
 
-        public static bool IsOculusSDKHmdVR()
+        public static bool IsOculusSDKHmdVR
         {
-            return IsStandalonePlatform() && IsOculusVRActive();
+            get { return IsStandalonePlatform() && IsOculusVRActive;}
+            private set { }
         }
 
-        public static bool IsSteamVRActive()
+        public static bool IsSteamVRActive
         {
-            return VRSettings.enabled && VRSettings.loadedDeviceName.Equals("OpenVR");
+            get { return VRSettings.enabled && VRSettings.loadedDeviceName.Equals("OpenVR"); }
+            private set { }
         }
 
         private static bool IsStandalonePlatform()
@@ -53,6 +58,7 @@ namespace EyeTribe.Unity
                     Application.platform == RuntimePlatform.WindowsPlayer ||
                     Application.platform == RuntimePlatform.LinuxPlayer ||
                     Application.platform == RuntimePlatform.OSXPlayer;
+
         }
 
         private static bool IsAndroidPlatform()

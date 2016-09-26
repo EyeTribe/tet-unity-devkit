@@ -23,10 +23,14 @@ namespace EyeTribe.Unity
     public class FrameRateGazeDataQueue : GazeDataQueue
     {
         private readonly static long BUFFER_SIZE_MILLIS = 5000;
-        private readonly static long BUFFER_SIZE_MIN = BUFFER_SIZE_MILLIS / 2;
 
         public FrameRateGazeDataQueue()
             : base(BUFFER_SIZE_MILLIS)
+        {
+        }
+        
+        public FrameRateGazeDataQueue(long timeLimit)
+            : base(timeLimit)
         {
         }
 
@@ -34,7 +38,7 @@ namespace EyeTribe.Unity
         {
             float avgMillis;
             if ((avgMillis = GetAvgMillisFrame()) > 0)
-                return 1000 / avgMillis;
+                return 1000f / avgMillis;
 
             return -1;
         }
@@ -51,12 +55,12 @@ namespace EyeTribe.Unity
                     float delta = last.TimeStamp - first.TimeStamp;
 
                     // only return value when buffer populated
-                    if (delta > BUFFER_SIZE_MIN)
+                    if (delta > (TimeLimit >> 1))
                         return delta / this.Count();
                 }
             }
 
-            return 0f;
+            return -1;
         }
     }
 }
