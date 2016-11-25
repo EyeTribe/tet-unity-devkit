@@ -827,6 +827,7 @@ GameObject:
   - 224: {fileID: 704747977}
   - 223: {fileID: 704747980}
   - 114: {fileID: 704747979}
+  - 225: {fileID: 704747982}
   - 114: {fileID: 704747981}
   - 114: {fileID: 704747984}
   - 114: {fileID: 704747978}
@@ -926,6 +927,17 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!225 &704747982
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 704747976}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &704747984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1239,7 +1251,9 @@ GameObject:
   - 224: {fileID: 860847779}
   - 223: {fileID: 860847782}
   - 114: {fileID: 860847781}
+  - 225: {fileID: 860847785}
   - 114: {fileID: 860847784}
+  - 114: {fileID: 860847786}
   - 114: {fileID: 860847780}
   - 114: {fileID: 860847783}
   m_Layer: 5
@@ -1355,6 +1369,32 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!225 &860847785
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 860847778}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &860847786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 860847778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36ec501a8570e3f469a983e6ba4c11aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_FadeSpeed: 2
+  m_GroupsToFade:
+  - {fileID: 860847785}
+  - {fileID: 704747982}
 --- !u!1001 &911326810
 Prefab:
   m_ObjectHideFlags: 0
@@ -1834,7 +1874,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Camera: {fileID: 1075941240}
   _CalibUIFader: {fileID: 1931593386}
-  _EyeUI: {fileID: 246389876}
+  _CalibUIRemoteFader: {fileID: 860847786}
+  _EyeUI: {fileID: 246389878}
   _StateNotifyer: {fileID: 1436374847}
   _GazeRaycaster: {fileID: 1171743092}
   _CalibArea: {fileID: 1114508325}
