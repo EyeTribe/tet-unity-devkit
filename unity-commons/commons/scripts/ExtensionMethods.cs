@@ -12,6 +12,7 @@ using System.Collections;
 using EyeTribe.ClientSdk;
 using EyeTribe.ClientSdk.Data;
 using EyeTribe.Unity;
+using System;
 
 public static class ExtensionMethods
 {
@@ -318,12 +319,47 @@ public static class ExtensionMethods
 
     public static CoroutineController StartCoroutineExtension(this MonoBehaviour monoBehaviour, IEnumerator routine)
     {
+        return StartCoroutineExtension(monoBehaviour, routine, null);
+    }
+
+    public static CoroutineController StartCoroutineExtension(this MonoBehaviour monoBehaviour, IEnumerator routine, Action onFinish)
+    {
         if (routine == null)
             throw new System.ArgumentNullException("Parameter 'routine' is NULL");
 
         CoroutineController coroutineController = new CoroutineController(routine);
+        if (null != onFinish)
+            coroutineController.OnFinish += onFinish;
         coroutineController.StartCoroutine(monoBehaviour);
         return coroutineController;
+    }
+
+    #endregion
+
+    #region Color Extensions
+
+    public static Color GetColorFromHex(this Color color, string hex)
+    {
+        hex = hex.Replace("0x", "");    //in case the string is formatted 0xFFFFFF
+        hex = hex.Replace("#", "");     //in case the string is formatted #FFFFFF
+
+        byte a = 255;   //assume fully visible unless specified in hex
+        byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+        byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+        byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+
+        //Only use alpha if the string has enough characters
+        if (hex.Length == 8)
+        {
+            a = byte.Parse(hex.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
+        }
+
+        return new Color32(r, g, b, a);
+    }
+
+    public static Color GetAlphaColor(this Color color, float alpha)
+    {
+        return new Color(color.r, color.g, color.b, alpha);
     }
 
     #endregion

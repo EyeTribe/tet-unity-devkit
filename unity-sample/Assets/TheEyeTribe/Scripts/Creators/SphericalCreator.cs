@@ -6,12 +6,10 @@
  *
  */
 
-using UnityEngine;
-using VRStandardAssets.Utils;
-using System.Collections;
-using UnityEngine.Events;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace EyeTribe.Unity.Interaction
 {
@@ -49,7 +47,7 @@ namespace EyeTribe.Unity.Interaction
                 throw new Exception("_DuplicateDistance must be a positive number");
         }
 
-        void OnEnable() 
+        protected virtual void OnEnable() 
         {
             Initialize();
         }

@@ -6,12 +6,12 @@
  *
  */
 
-using UnityEngine;
+using System;
 using System.Collections;
+using UnityEngine;
+using EyeTribe.ClientSdk;
 using EyeTribe.ClientSdk.Data;
 using EyeTribe.Unity;
-using EyeTribe.ClientSdk;
-using System;
 
 namespace EyeTribe.Unity.Calibration
 {
@@ -34,6 +34,8 @@ namespace EyeTribe.Unity.Calibration
         private Eye _LastLeftEye;
         private Eye _LastRightEye;
 
+        private bool _IsOff;
+
         void Awake()
         {
             if (null == _Camera)
@@ -50,19 +52,34 @@ namespace EyeTribe.Unity.Calibration
         {
             // Only use in 'remote' mode
             if (VRMode.IsRunningInVRMode)
+            {
                 gameObject.SetActive(false);
+            }
 
-            _LeftEye.SetRendererEnabled(true);
-            _RightEye.SetRendererEnabled(true);
             _EyeBaseScale = _LeftEye.transform.localScale;
+            TurnOn();
         }
 
+        public void TurnOff()
+        {
+            _IsOff = true;
+            _LeftEye.SetRendererEnabled(false);
+            _RightEye.SetRendererEnabled(false);
+        }
+
+        public void TurnOn()
+        {
+            _IsOff = false;
+            _LeftEye.SetRendererEnabled(true);
+            _RightEye.SetRendererEnabled(true);
+        }
+        
         void Update()
         {
             if (!Application.isPlaying)
                 return;
 
-            if (!VRMode.IsRunningInVRMode)
+            if (!VRMode.IsRunningInVRMode && !_IsOff)
             {
                 if (!GazeManager.Instance.IsCalibrating)
                 {

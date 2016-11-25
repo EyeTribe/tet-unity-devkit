@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 
 namespace VRStandardAssets.Utils
 {
@@ -37,6 +38,15 @@ namespace VRStandardAssets.Utils
             m_FadeImage.enabled = true;
         }
 
+        void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnLevelLoaded;
+        }
+
+        void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnLevelLoaded;
+        }
 
         private void Start()
         {
@@ -49,7 +59,7 @@ namespace VRStandardAssets.Utils
         }
 
 
-        private void OnLevelWasLoaded()
+        private void OnLevelLoaded(Scene scene, LoadSceneMode mode)
         {
             // If applicable set the immediate colour to be faded out and then fade in.
             if (m_FadeInOnSceneLoad)

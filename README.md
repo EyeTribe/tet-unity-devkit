@@ -8,7 +8,7 @@ This is a collection of tools and utilities for  [EyeTribe Dev Kit](https://thee
 
 An [EyeTribe Tracker](https://theeyetribe.com/products/)  or [EyeTribe VR Tracker](https://theeyetribe.com/wp-content/uploads/2016/01/vr-product-sheet.pdf) is required to use this library. This dev kit supports both ***remote eye-tracking*** and ***vr eye-tracking***.
 
-Developed for and tested against [Unity 5.4.1](https://store.unity.com/download?ref=update).
+Developed for and tested against [Unity 5.4.2](https://store.unity.com/download?ref=update).
 
 Prerequisites
 ----

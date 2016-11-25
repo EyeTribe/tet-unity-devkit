@@ -6,12 +6,10 @@
  *
  */
 
-using UnityEngine;
-using VRStandardAssets.Utils;
-using System.Collections;
-using UnityEngine.Events;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace EyeTribe.Unity.Interaction
 {
