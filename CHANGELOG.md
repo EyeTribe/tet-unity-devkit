@@ -1,6 +1,12 @@
 # Change Log #
 ---
 
+Version 1.1.0.1 (2016-11-25)
+---
+
+- Improved Calibration UI flow
+- Updated EyeTribe C# SDK dependency to v.0.9.77.6
+
 Version 1.1.0.0 (2016-09-26)
 ---
 

@@ -6,19 +6,20 @@
  *
  */
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using VRStandardAssets.Utils;
-using System.Collections;
-using UnityEngine.Events;
-using System;
 
 namespace EyeTribe.Unity.Interaction
 {
 
     public class SphericalCreatorInteraction : SphericalCreator
     {
-        [SerializeField]private SelectionRadialEyeTribe _SelectionRadialEyeTribe;
-        [SerializeField]private Transform _ReticleTransform;
+        [SerializeField] private SelectionRadialEyeTribe _SelectionRadialEyeTribe;
+        [SerializeField] private Transform _ReticleTransform;
+        [SerializeField] private StateNotifyer _StateNotifyer;
 
         protected override void Awake()
         {
@@ -29,6 +30,21 @@ namespace EyeTribe.Unity.Interaction
 
             if (null == _ReticleTransform)
                 throw new Exception("_ReticleTransform is not set");
+
+            if (null == _StateNotifyer)
+                throw new Exception("_StateNotifyer is not set");
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+
+            Invoke("IntroText", 1f);
+        }
+
+        private void IntroText()
+        { 
+            _StateNotifyer.ShowState(.5f, 2f, "<b>GAZE</b> and press <b>FIRE1*</b> to interact");
         }
 
         protected override GameObject CreateObject(Vector3 position, Quaternion rotation)

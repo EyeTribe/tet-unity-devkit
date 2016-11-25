@@ -6,11 +6,11 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using EyeTribe.ClientSdk.Data;
-using EyeTribe.ClientSdk;
 using System;
+using System.Collections;
+using UnityEngine;
+using EyeTribe.ClientSdk;
+using EyeTribe.ClientSdk.Data;
 
 namespace EyeTribe.Unity
 {

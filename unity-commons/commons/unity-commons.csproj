@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EyeTribe.ClientSdk">
-      <HintPath>..\packages\EyeTribe.ClientSdk.0.9.77.5\lib\net35\EyeTribe.ClientSdk.dll</HintPath>
+      <HintPath>..\packages\EyeTribe.ClientSdk.0.9.77.6\lib\net35\EyeTribe.ClientSdk.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

@@ -6,10 +6,10 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using EyeTribe.Unity;
 using System;
+using System.Collections;
+using UnityEngine;
+using EyeTribe.Unity;
 
 namespace EyeTribe.Unity
 {

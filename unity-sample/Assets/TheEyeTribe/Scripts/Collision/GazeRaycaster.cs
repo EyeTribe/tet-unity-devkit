@@ -6,13 +6,12 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using VRStandardAssets.Utils;
-using EyeTribe.Unity;
-using EyeTribe.ClientSdk.Data;
 using System;
-using EyeTribe.Unity.Calibration;
+using System.Collections;
+using UnityEngine;
+using EyeTribe.ClientSdk.Data;
+using EyeTribe.Unity;
+using VRStandardAssets.Utils;
 
 namespace EyeTribe.Unity
 {
@@ -166,14 +165,22 @@ namespace EyeTribe.Unity
                 // handle reticle position
                 if (IsControllingReticle && _Reticle.enabled)
                 {
-                    _Reticle.SetPosition(hit);
+                    if (null != hit.collider)
+                        _Reticle.SetPosition(hit);
+                    else
+                        _Reticle.SetPosition(_Camera.transform.rotation * rayDirection);
                     _Reticle.Show();
                 }
 
                 // If optional reticle set, position it
-                if (null != _ReticleOptional && _ReticleOptional.gameObject.activeInHierarchy && _ReticleOptional.enabled)
+                if (null != _ReticleOptional && 
+                    _ReticleOptional.gameObject.activeInHierarchy && 
+                    _ReticleOptional.enabled)
                 {
-                    _ReticleOptional.SetPosition(hit);
+                    if (null != hit.collider)
+                        _ReticleOptional.SetPosition(hit);
+                    else
+                        _ReticleOptional.SetPosition(_Camera.transform.rotation * rayDirection);
                     _ReticleOptional.Show();
                 }
             }

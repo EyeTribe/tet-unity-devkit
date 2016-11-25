@@ -273,7 +273,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 114000010912805516, guid: 1b49d04e7191f1649bc2b0e2f214117c,
     type: 2}
   m_PrefabInternal: {fileID: 1621172260}
-  m_Script: {fileID: -122707731, guid: 1a14cb20a70310c43a14c091defd7219, type: 3}
+  m_Script: {fileID: -122707731, guid: 8dd900686d68e2845bd509817058828f, type: 3}
 --- !u!1 &277534860
 GameObject:
   m_ObjectHideFlags: 0
@@ -1120,6 +1120,7 @@ MonoBehaviour:
   InitialUseSmoothed: 0
   InitialShowDebug: 0
   InitialShowGazeIndicator: 0
+  InitialBlockWhenCalibrating: 1
 --- !u!1001 &911326810
 Prefab:
   m_ObjectHideFlags: 0
@@ -1852,6 +1853,7 @@ MonoBehaviour:
   _RandomRotation: 1
   _SelectionRadialEyeTribe: {fileID: 1292006740}
   _ReticleTransform: {fileID: 1561963833}
+  _StateNotifyer: {fileID: 1580458721}
 --- !u!224 &1486279717
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2779,7 +2781,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 114000011761287706, guid: 9d0e38a7d92093941a1e9d8bfef4aed7,
     type: 2}
   m_PrefabInternal: {fileID: 1784954768}
-  m_Script: {fileID: 945541614, guid: 1a14cb20a70310c43a14c091defd7219, type: 3}
+  m_Script: {fileID: 945541614, guid: 8dd900686d68e2845bd509817058828f, type: 3}
 --- !u!1001 &2120839251
 Prefab:
   m_ObjectHideFlags: 0

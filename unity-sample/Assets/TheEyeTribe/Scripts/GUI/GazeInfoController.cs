@@ -6,14 +6,13 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
-using EyeTribe.Unity;
 using System;
-using EyeTribe.ClientSdk.Data;
-using EyeTribe.Unity.Calibration;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 using VRStandardAssets.Utils;
+using EyeTribe.Unity.Calibration;
+using EyeTribe.ClientSdk.Data;
 
 namespace EyeTribe.Unity
 {
@@ -89,14 +88,14 @@ namespace EyeTribe.Unity
 
             GazeGUIController.OnDebugModeToggle += ToggleDebug;
 
-            CalibrationManager.OnCalibrationStateChange += CalibrationStateChange;
+            EyeTribeSDK.OnCalibrationStateChange += OnCalibrationStateChange;
         }
 
         void OnDisable()
         {
             GazeGUIController.OnDebugModeToggle -= ToggleDebug;
 
-            CalibrationManager.OnCalibrationStateChange -= CalibrationStateChange;
+            EyeTribeSDK.OnCalibrationStateChange -= OnCalibrationStateChange;
         }
 
         private IEnumerator DelayedInitializer()
@@ -210,7 +209,7 @@ namespace EyeTribe.Unity
                 StartCoroutine(_UiFader.InteruptAndFadeOut());
         }
 
-        private void CalibrationStateChange(bool isCalibrating)
+        private void OnCalibrationStateChange(bool isCalibrating, bool isCalibrated)
         {
             if (!_IsLocked && isCalibrating)
             {

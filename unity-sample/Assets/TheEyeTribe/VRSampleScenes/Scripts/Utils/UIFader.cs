@@ -70,12 +70,16 @@ namespace VRStandardAssets.Utils
                 // Go through all the groups...
                 for (int i = 0; i < m_GroupsToFade.Length; i++)
                 {
-                    // ... and increment their alpha based on the fade speed.
-                    m_GroupsToFade[i].alpha += m_FadeSpeed * Time.deltaTime;
+                    var cg = m_GroupsToFade[i];
+                    if (null != cg)
+                    {
+                        // ... and increment their alpha based on the fade speed.
+                        cg.alpha += m_FadeSpeed * Time.deltaTime;
 
-                    // Also we need to check what the lowest alpha is.
-                    if (m_GroupsToFade[i].alpha < lowestAlpha)
-                        lowestAlpha = m_GroupsToFade[i].alpha;
+                        // Also we need to check what the lowest alpha is.
+                        if (cg.alpha < lowestAlpha)
+                            lowestAlpha = cg.alpha;
+                    }
                 }
 
                 // Wait until next frame.
@@ -134,10 +138,14 @@ namespace VRStandardAssets.Utils
 
                 for (int i = 0; i < m_GroupsToFade.Length; i++)
                 {
-                    m_GroupsToFade[i].alpha -= m_FadeSpeed * Time.deltaTime;
+                    var cg = m_GroupsToFade[i];
+                    if (null != cg)
+                    {
+                        cg.alpha -= m_FadeSpeed * Time.deltaTime;
 
-                    if (m_GroupsToFade[i].alpha > highestAlpha)
-                        highestAlpha = m_GroupsToFade[i].alpha;
+                        if (cg.alpha > highestAlpha)
+                            highestAlpha = cg.alpha;
+                    }
                 }
 
                 yield return null;
@@ -158,7 +166,11 @@ namespace VRStandardAssets.Utils
         {
             for (int i = 0; i < m_GroupsToFade.Length; i++)
             {
-                m_GroupsToFade[i].alpha = 1f;
+                var cg = m_GroupsToFade[i];
+                if (null != cg)
+                {
+                    m_GroupsToFade[i].alpha = 1f;
+                }
             }
 
             Visible = true;
@@ -169,7 +181,11 @@ namespace VRStandardAssets.Utils
         {
             for (int i = 0; i < m_GroupsToFade.Length; i++)
             {
-                m_GroupsToFade[i].alpha = 0f;
+                var cg = m_GroupsToFade[i];
+                if (null != cg)
+                {
+                    cg.alpha = 0f;
+                }
             }
 
             Visible = false;

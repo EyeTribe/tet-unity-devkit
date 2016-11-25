@@ -6,10 +6,10 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
 using System;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 using EyeTribe.Unity;
 using EyeTribe.Unity.Calibration;
 
@@ -49,15 +49,15 @@ namespace EyeTribe.Unity
             if (VRMode.IsRunningInVRMode)
                 Destroy(this.gameObject);
 
-            CalibrationManager.OnCalibrationStateChange += CalibrationStateChange;
+            EyeTribeSDK.OnCalibrationStateChange += OnCalibrationStateChange;
         }
 
         void OnDisable() 
         {
-            CalibrationManager.OnCalibrationStateChange -= CalibrationStateChange;
+            EyeTribeSDK.OnCalibrationStateChange -= OnCalibrationStateChange;
         }
 
-        private void CalibrationStateChange(bool isCalibrating)
+        private void OnCalibrationStateChange(bool isCalibrating, bool isCalibrated)
         {
             if (!VRMode.IsRunningInVRMode)
             { 

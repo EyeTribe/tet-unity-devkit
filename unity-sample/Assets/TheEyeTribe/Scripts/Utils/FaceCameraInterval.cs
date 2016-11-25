@@ -6,14 +6,10 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
-using EyeTribe.Unity;
 using System;
-using EyeTribe.ClientSdk.Data;
-using EyeTribe.Unity.Calibration;
-using VRStandardAssets.Utils;
+using System.Collections;
+using UnityEngine;
+using EyeTribe.Unity;
 
 namespace EyeTribe.Unity
 {    

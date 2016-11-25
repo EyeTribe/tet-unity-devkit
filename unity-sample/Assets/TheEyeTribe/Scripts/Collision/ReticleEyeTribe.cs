@@ -97,6 +97,18 @@ namespace EyeTribe.Unity
             _ReticleTransform.localRotation = _OriginalRotation;
         }
 
+        public void SetPosition(Vector3 rayDirection)
+        {
+            // Set the position of the reticle to the default distance in front of the camera.
+            _ReticleTransform.position = _Camera.position + rayDirection * _DefaultDistance;
+
+            // Set the scale based on the original and the distance from the camera.
+            _ReticleTransform.localScale = _OriginalScale * _DefaultDistance;
+
+            // The rotation should just be the default.
+            _ReticleTransform.localRotation = _OriginalRotation;
+        }
+
         // This overload of SetPosition is used when the VREyeRaycaster has hit something.
         public void SetPosition(RaycastHit hit)
         {

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.VR;
+using System.Linq;
 
 namespace VRStandardAssets.Utils
 {
@@ -52,7 +53,8 @@ namespace VRStandardAssets.Utils
 #endif
 
 #if UNITY_STANDALONE
-            VRSettings.loadedDevice = VRDeviceType.Oculus;
+            if(VRSettings.supportedDevices.Where(s => s.CompareTo("Oculus") == 0).Count() > 0)
+                VRSettings.LoadDeviceByName("Oculus");
 #endif
             
 #if UNITY_PS4 && !UNITY_EDITOR

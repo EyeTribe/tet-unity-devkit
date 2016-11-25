@@ -6,14 +6,14 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using EyeTribe.Unity;
-using EyeTribe.ClientSdk;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
-using System.Collections.Generic;
+using EyeTribe.Unity;
+using EyeTribe.ClientSdk;
 using EyeTribe.ClientSdk.Data;
 
 namespace EyeTribe.Unity.Calibration

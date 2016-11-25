@@ -6,17 +6,17 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using EyeTribe.ClientSdk;
-using System.Collections.Generic;
-using EyeTribe.ClientSdk.Data;
 using System;
-using EyeTribe.Unity;
-using VRStandardAssets.Utils;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using EyeTribe.Unity;
 using EyeTribe.Unity.Interaction;
+using EyeTribe.ClientSdk;
+using EyeTribe.ClientSdk.Data;
+using VRStandardAssets.Utils;
 
 namespace EyeTribe.Unity.Calibration
 {
@@ -25,11 +25,10 @@ namespace EyeTribe.Unity.Calibration
     /// </summary>
     public class CalibrationManager : MonoBehaviour, ICalibrationProcessHandler
     {
-        public static event Action<bool> OnCalibrationStateChange;
-
         [SerializeField] protected Camera _Camera;
         [SerializeField] protected UIFader _CalibUIFader;
-        [SerializeField] protected GameObject _EyeUI;
+        [SerializeField] protected UIFader _CalibUIRemoteFader;
+        [SerializeField] protected EyeUI _EyeUI;
         [SerializeField] protected StateNotifyer _StateNotifyer;
         [SerializeField] protected GazeRaycaster _GazeRaycaster;
 
@@ -208,7 +207,12 @@ namespace EyeTribe.Unity.Calibration
                 _QualityText.enabled = false;
                 _InfoText.text = "\n\nFollow the <b>Calibration Point</b>";
 
+                StartCoroutine(_CalibUIRemoteFader.InteruptAndFadeOut());
+
                 StartCoroutine(_CalibUIFader.InteruptAndFadeIn());
+
+                if (null != _EyeUI && _EyeUI.gameObject.activeInHierarchy)
+                    _EyeUI.TurnOff();
 
                 Invoke("DelayedShowCalibPoint", CALIB_INTRO_DELAY * .5f);
 
@@ -337,13 +341,7 @@ namespace EyeTribe.Unity.Calibration
             // Dispatch to Unity main thread
             _Dispatcher.Dispatch(() =>
             {
-                if (null != _EyeUI && _EyeUI.gameObject.activeInHierarchy)
-                    _EyeUI.gameObject.SetActive(false);
-
                 Invoke("ShowNextCalibrationPoint", 0.1f);
-
-                if (null != OnCalibrationStateChange)
-                    OnCalibrationStateChange(GazeManager.Instance.IsCalibrating);
             });
         }
 
@@ -359,8 +357,8 @@ namespace EyeTribe.Unity.Calibration
             {
                 StartCoroutine(_CalibUIFader.InteruptAndFadeIn());
 
-                if (null != _EyeUI && (!_EyeUI.gameObject.activeInHierarchy))
-                    _EyeUI.gameObject.SetActive(true);
+                if (null != _EyeUI && _EyeUI.gameObject.activeInHierarchy)
+                    _EyeUI.TurnOn();
 
                 _InfoText.enabled = true;
                 _InfoText.text = "\n\nProcessing Calibration";
@@ -392,7 +390,7 @@ namespace EyeTribe.Unity.Calibration
                         _CalibrationPoints.Clear();
                         GazeManager.Instance.CalibrationAbort();
 
-                        //ResetUI();
+                        StartCoroutine(_CalibUIRemoteFader.InteruptAndFadeIn());
 
                         Debug.Log("Calibration FAIL");
                     }
@@ -405,9 +403,6 @@ namespace EyeTribe.Unity.Calibration
                 {
                     if (calibResult.AverageErrorDegree < 1.5)
                     {
-                        //ResetUI();
-                        //GazeIndicatorSwitch(true);
-
                         Debug.Log("Calibration SUCCESS");
 
                         LoadNextScene();
@@ -417,14 +412,11 @@ namespace EyeTribe.Unity.Calibration
                         _CalibrationPoints.Clear();
                         GazeManager.Instance.CalibrationAbort();
 
-                        //ResetUI();
+                        StartCoroutine(_CalibUIRemoteFader.InteruptAndFadeIn());
 
                         Debug.Log("Calibration FAIL");
                     }
                 }
-
-                if (null != OnCalibrationStateChange)
-                    OnCalibrationStateChange(GazeManager.Instance.IsCalibrating);
             });
         }
     }

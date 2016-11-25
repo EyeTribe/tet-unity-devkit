@@ -6,10 +6,10 @@
  *
  */
 
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using System;
 using VRStandardAssets.Utils;
 
 namespace EyeTribe.Unity.Interaction
@@ -38,6 +38,9 @@ namespace EyeTribe.Unity.Interaction
         {
             if (_FadeDuration < 0f)
                 throw new Exception("_FadeDuration most be positive!");
+
+            if (null != InteractiveItem)
+                Initialize();
         }
 
         public void Initialize()

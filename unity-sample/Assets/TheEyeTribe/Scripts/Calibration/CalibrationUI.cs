@@ -6,19 +6,14 @@
  *
  */
 
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using UnityEngine.VR;
-using UnityEngine.SceneManagement;
 using System;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 using EyeTribe.ClientSdk;
 using EyeTribe.ClientSdk.Data;
 using EyeTribe.Unity;
-using VRStandardAssets.Utils;
-using EyeTribe.ClientSdk.Utils;
 
 namespace EyeTribe.Unity.Calibration
 {

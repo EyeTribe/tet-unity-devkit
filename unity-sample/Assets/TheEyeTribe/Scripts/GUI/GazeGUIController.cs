@@ -6,13 +6,13 @@
  *
  */
 
-using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
-using VRStandardAssets.Utils;
 using System;
-using EyeTribe.ClientSdk.Data;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 using EyeTribe.ClientSdk;
+using EyeTribe.ClientSdk.Data;
+using VRStandardAssets.Utils;
 
 namespace EyeTribe.Unity 
 {
@@ -89,8 +89,6 @@ namespace EyeTribe.Unity
                     Input.GetButtonDown("Fire3")
                     )
                 {
-                    Debug.Log("Toggle");
-
                     ToggleIndicatorMode();
                 }
                 else
